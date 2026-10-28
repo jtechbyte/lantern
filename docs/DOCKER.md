@@ -24,6 +24,8 @@ Use the same `-f compose.image.yaml` on future commands. This file is a complete
 
 Read `.env` privately for the generated admin token, open `http://localhost:7001`, and unlock. Save your provider token in Playback, test the saved account, then install in Stremio. Configure your public HTTPS origin before using remote devices; localhost on a phone or TV is that device, not this server. See [Installation](INSTALLATION.md) for the complete walkthrough and source configuration.
 
+Use the exact `PUBLIC_URL` origin in your browser. With setup's default, open `http://localhost:7001`, not `http://127.0.0.1:7001`; requests that change settings are rejected when the browser origin differs. The command-line health probe can use the loopback IP.
+
 `ADMIN_TOKEN`, `ENCRYPTION_KEY`, and `POSTGRES_PASSWORD` are required. Setup generates them; [.env.example](../.env.example) explains every supported deployment variable without usable credentials. Never replace an existing encryption key as part of an update. Active data is in `postgres_data`; `lantern_data` is retained read-only for legacy SQLite migration.
 
 For bundled HTTPS, set `PUBLIC_URL=https://your-real-hostname` and `DOMAIN=your-real-hostname`, configure DNS/ports, then:

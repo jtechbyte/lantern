@@ -50,6 +50,18 @@ Tests used isolated random Compose projects and disposable data, not production 
 
 ## Limits
 
+### Documentation clean-install follow-up
+
+On 2026-10-28, the [clean Compose installation workflow](https://github.com/jtechbyte/lantern/actions/runs/40720267291) passed on fresh native Ubuntu AMD64 and ARM64 runners. It cloned the documentation-review branch, ran the actual `sh scripts/setup.sh`, verified private generated credentials and preservation on rerun, and used the unmodified production Compose file with its default published `0.1.1` image. Test-only Node/Playwright dependencies were installed on the runner; they are not required on deployment hosts.
+
+The documented config validation, anonymous Compose pull, startup/wait, health, status, and log operations succeeded. Actual browser login and saving, refresh persistence, application and database restart, container recreation, database outage/recovery, and native dump/restore all passed. Random project names and temporary directories isolated test volumes from existing installations. Four local publishing/Compose compatibility checks and relative Markdown target checks also passed.
+
+The first test attempt used the loopback IP in the browser while setup generated a localhost public origin; saving was correctly rejected by origin protection. The corrected test uses the documented localhost address. The README and Docker guide now explain this requirement. No authentication or application behavior was changed.
+
+The checks above do not exercise the complete host image archive/load rollback procedure or deployment-specific proxy configuration.
+
+### Remaining acceptance checks
+
 External DNS/TLS and proxy routing, real Real-Debrid account connectivity, Stremio video playback, legacy SQLite migration, and rollback to an older application image were not exercised by this publishing run. These tests do not verify every dashboard feature or every ARM CPU variant. The 0.1.1 packaging release adds no schema migration; future schema changes can still require restoring a matching backup for rollback.
 
 See [Docker deployment](DOCKER.md) for setup, updates, version selection, and backup/restore instructions. The recommended Compose file pins `0.1.1`; stable aliases can move on later releases.
