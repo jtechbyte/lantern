@@ -1,7 +1,7 @@
 // Disposable Compose deployment only. Never points at an existing project/volume.
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, copyFileSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, copyFileSync, writeFileSync, readFileSync, rmSync, mkdirSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { randomBytes } from 'node:crypto';
@@ -12,9 +12,11 @@ if (!image || !/^[a-zA-Z0-9/:@._-]+$/.test(image)) throw new Error('Supply the i
 const directory = mkdtempSync(join(tmpdir(), 'lantern-container-test-'));
 const project = `lantern-test-${randomBytes(6).toString('hex')}`;
 const base = 'http://127.0.0.1:7001';
-const admin = randomBytes(32).toString('hex');
+let admin = randomBytes(32).toString('hex');
+const documentedSetup = process.argv.includes('--documented-setup');
 const version = JSON.parse(readFileSync('package.json', 'utf8')).version;
-const composeArgs = ['compose', '--project-name', project, '--project-directory', directory, '-f', join(directory, 'compose.yaml')];
+const composeFile = documentedSetup ? 'compose.image.yaml' : 'compose.yaml';
+const composeArgs = ['compose', '--project-name', project, '--project-directory', directory, '-f', join(directory, composeFile)];
 const docker = (...args) => execFileSync('docker', args, { encoding: 'utf8', timeout: 180000, maxBuffer: 4 * 1024 * 1024 });
 const compose = (...args) => docker(...composeArgs, ...args);
 const api = async (path, method = 'GET', body) => {
@@ -31,10 +33,27 @@ const healthy = async () => {
 };
 let browser;
 try {
-  copyFileSync('compose.image.yaml', join(directory, 'compose.yaml'));
+  copyFileSync('compose.image.yaml', join(directory, composeFile));
   copyFileSync('Caddyfile', join(directory, 'Caddyfile'));
-  writeFileSync(join(directory, '.env'), `LANTERN_IMAGE=${image}\nADMIN_TOKEN=${admin}\nENCRYPTION_KEY=${randomBytes(32).toString('hex')}\nPOSTGRES_PASSWORD=${randomBytes(32).toString('hex')}\nPUBLIC_URL=${base}\nLANTERN_BIND_ADDRESS=127.0.0.1\n`, { mode: 0o600 });
+  if (documentedSetup) {
+    assert.equal(image, 'jctechmin/lantern:0.1.1');
+    mkdirSync(join(directory, 'scripts'));
+    copyFileSync('scripts/setup.sh', join(directory, 'scripts/setup.sh'));
+    execFileSync('sh', ['scripts/setup.sh'], { cwd: directory });
+    const env = readFileSync(join(directory, '.env'), 'utf8');
+    admin = env.match(/^ADMIN_TOKEN=([a-f0-9]{64})$/m)?.[1];
+    assert.ok(admin);
+    assert.match(env, /^ENCRYPTION_KEY=[a-f0-9]{64}$/m);
+    assert.match(env, /^POSTGRES_PASSWORD=[a-f0-9]{64}$/m);
+    assert.equal(statSync(join(directory, '.env')).mode & 0o777, 0o600);
+    execFileSync('sh', ['scripts/setup.sh'], { cwd: directory });
+    assert.equal(readFileSync(join(directory, '.env'), 'utf8'), env);
+    console.log('PASS documented setup generates private credentials and preserves them on rerun');
+  } else {
+    writeFileSync(join(directory, '.env'), `LANTERN_IMAGE=${image}\nADMIN_TOKEN=${admin}\nENCRYPTION_KEY=${randomBytes(32).toString('hex')}\nPOSTGRES_PASSWORD=${randomBytes(32).toString('hex')}\nPUBLIC_URL=${base}\nLANTERN_BIND_ADDRESS=127.0.0.1\n`, { mode: 0o600 });
+  }
   compose('config', '--quiet');
+  if (documentedSetup) compose('pull');
   const config = JSON.parse(docker('image', 'inspect', image))[0].Config;
   assert.equal(config.User, 'node');
   assert.equal(config.Labels['org.opencontainers.image.source'], 'https://github.com/jtechbyte/lantern');
@@ -45,6 +64,13 @@ try {
   docker('run', '--rm', '--entrypoint', 'node', image, '-e', "const fs=require('fs'),assert=require('assert');assert.notEqual(process.getuid(),0);for(const f of ['.env','test','.git','artifacts','scripts/browser-smoke.mjs','node_modules/playwright'])assert.ok(!fs.existsSync('/app/'+f),f);for(const f of ['src/main.mjs','scripts/migrate-sqlite.mjs','scripts/doctor.mjs','scripts/check-deployment.mjs','LICENSE'])assert.ok(fs.existsSync('/app/'+f),f);require('pg');");
   compose('up', '-d', '--wait', '--wait-timeout', '120');
   await healthy();
+  if (documentedSetup) {
+    const health = JSON.parse(execFileSync('curl', ['-fsS', `${base}/healthz`], { encoding: 'utf8' }));
+    assert.equal(health.status, 'ok');
+    compose('ps');
+    compose('logs', '--tail=100', 'lantern', 'postgres');
+    console.log('PASS documented config, pull, start, health, status and log commands');
+  }
   assert.equal((await fetch(`${base}/api/settings`)).status, 401);
   const initial = await api('settings');
   assert.equal(initial.database, 'postgresql');
@@ -96,7 +122,7 @@ try {
   compose('exec', '-T', 'postgres', 'createdb', '-U', 'lantern', 'lantern_restore');
   execFileSync('docker', [...composeArgs, 'exec', '-T', 'postgres', 'pg_restore', '-U', 'lantern', '-d', 'lantern_restore', '--no-owner', '--exit-on-error'], { input: dump, timeout: 60000 });
   compose('stop', 'lantern');
-  const composePath = join(directory, 'compose.yaml');
+  const composePath = join(directory, composeFile);
   writeFileSync(composePath, readFileSync(composePath, 'utf8').replace('PGDATABASE: lantern', 'PGDATABASE: lantern_restore'));
   compose('up', '-d', '--force-recreate', '--wait', '--wait-timeout', '120', 'lantern'); await healthy(); await checkSaved();
   console.log('PASS native pg_dump/pg_restore into a separate database preserves encrypted settings and installation identity');

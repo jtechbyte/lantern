@@ -8,6 +8,48 @@ Lantern is a self-hosted Stremio addon for people who want to manage their own s
 
 The dashboard explains what was found, why results were excluded, and whether a source responded. Lantern stores metadata, not videos. It does not proxy or transcode playback.
 
+## Quick start — Docker Hub
+
+Published for **linux/amd64 and linux/arm64**, the project-maintained image is [`jctechmin/lantern`](https://hub.docker.com/r/jctechmin/lantern). The production Compose example pins `0.1.1`; see [image tags, publishing status, and deployment](docs/DOCKER.md). The original `compose.yaml` remains available for local source builds.
+
+Requires Docker Engine with the Compose plugin, Git (or a source archive), and OpenSSL. For Ubuntu, follow [Docker's installation instructions](https://docs.docker.com/engine/install/ubuntu/). Node is included in the image.
+
+```sh
+git clone https://github.com/jtechbyte/lantern.git
+cd lantern
+sh scripts/setup.sh
+# Setup creates .env with random admin, encryption and database credentials.
+# Edit .env privately: set PUBLIC_URL to your HTTPS origin for remote use.
+docker compose -f compose.image.yaml config --quiet
+docker compose -f compose.image.yaml pull
+docker compose -f compose.image.yaml up -d --wait --wait-timeout 120
+curl -fsS http://127.0.0.1:7001/healthz
+docker compose -f compose.image.yaml ps
+docker compose -f compose.image.yaml logs --tail=100 lantern postgres
+```
+
+For local evaluation open **http://localhost:7001**. Unlock with `ADMIN_TOKEN` from your private `.env`. In **Playback**, enter your Real-Debrid token, **Save configuration**, then **Test account**. Choose discovery sources, save, and use **Install in Stremio**.
+
+For a remote server, configure `PUBLIC_URL` and HTTPS using [Installation](docs/INSTALLATION.md). A Stremio device cannot reach your server through its own localhost. Existing SQLite installations require an explicit migration.
+
+Setup preserves an existing `.env`; do not replace it with the blank [.env.example](.env.example). That reference distinguishes required secrets from optional networking and image settings. PostgreSQL stays on the internal Compose network, and saved data survives container recreation in named volumes. Lantern initializes the database on first startup.
+
+On a remote server, use `ssh -L 7001:127.0.0.1:7001 user@server` for temporary dashboard access, substituting your SSH account and host. Remote Stremio clients still require a reachable HTTPS origin.
+
+### Updates and recovery
+
+Before updating, [back up PostgreSQL, your .env, and the current image](docs/OPERATIONS.md#create-a-backup-before-updating). Preserve your original encryption key, Compose project identity, and local overrides. Select a published version using `LANTERN_IMAGE` in `.env`, then:
+
+```sh
+docker compose -f compose.image.yaml pull lantern
+docker compose -f compose.image.yaml up -d --no-build --wait --wait-timeout 120 lantern
+curl -fsS http://127.0.0.1:7001/healthz
+```
+
+Follow the [restore](docs/OPERATIONS.md#restore-without-overwriting-the-existing-database) and [rollback](docs/OPERATIONS.md#rollback) procedures to recover into a separate database. Version 0.1.1 adds no schema migration, but older applications can reject databases upgraded by future releases; retain a matching pre-update backup. Never delete volumes to update or roll back.
+
+The published `latest` tag tracks stable releases and can change; it does not automatically update running containers. The recommended deployment uses `0.1.1`. For local source builds, follow [the separate source-build instructions](docs/INSTALLATION.md) using `compose.yaml` and `--build`. Do not mix the two Compose files or overwrite an existing deployment's customizations.
+
 ![Lantern Overview dashboard showing setup status and source health](docs/images/dashboard-overview.png)
 
 *Actual application screenshot using isolated demonstration data. Statuses and counts are examples, not live provider measurements.*
@@ -34,27 +76,6 @@ Real-Debrid is the only implemented playback provider. Streaming requires your o
 **Finding a result does not confirm that it is cached, accepted, or playable.** Uncached releases may require provider downloading. Account tests verify account access, not a particular stream. Services can block, throttle, change, or return no results.
 
 Monitoring refreshes an exact movie or episode; searching alone does not enable it. There are no email/push notifications, whole-show subscriptions, or automatic playback failover. Coverage and conservative matching are incomplete. Use sources and media you are authorized to access.
-
-## Quick start — Docker Hub
-
-The project-maintained image is [`jctechmin/lantern`](https://hub.docker.com/r/jctechmin/lantern). The production Compose example pins `0.1.1`; see [image tags, publishing status, and deployment](docs/DOCKER.md). The original `compose.yaml` remains available for local source builds.
-
-Requires Docker Engine with the Compose plugin, Git (or a source archive), and OpenSSL. For Ubuntu, follow [Docker's installation instructions](https://docs.docker.com/engine/install/ubuntu/). Node is included in the image.
-
-```sh
-git clone https://github.com/jtechbyte/lantern.git
-cd lantern
-sh scripts/setup.sh
-# Edit .env for public HTTPS access; preserve generated secrets.
-docker compose -f compose.image.yaml config --quiet
-docker compose -f compose.image.yaml pull
-docker compose -f compose.image.yaml up -d --wait --wait-timeout 120
-curl -fsS http://127.0.0.1:7001/healthz
-```
-
-For local evaluation open **http://localhost:7001**. Unlock with `ADMIN_TOKEN` from your private `.env`. In **Playback**, enter your Real-Debrid token, **Save configuration**, then **Test account**. Choose discovery sources, save, and use **Install in Stremio**.
-
-For a remote server, configure `PUBLIC_URL` and HTTPS using [Installation](docs/INSTALLATION.md). A Stremio device cannot reach your server through its own localhost. Existing SQLite installations require an explicit migration.
 
 ## Documentation
 

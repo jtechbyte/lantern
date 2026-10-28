@@ -6,7 +6,7 @@ For the prebuilt Docker Hub image, use [Docker Hub deployment](DOCKER.md) and `c
 
 The supplied deployment uses Node 24, PostgreSQL 17, and optionally Caddy 2 in containers. The host needs Docker Engine and a Compose plugin supporting `up --wait`, OpenSSL for `scripts/setup.sh`, and Git or an archive extractor. Follow [Docker's Ubuntu installation guide](https://docs.docker.com/engine/install/ubuntu/), then verify `docker version` and `docker compose version`. Node is not required on a Docker host.
 
-No measured minimum CPU/RAM specification is available. Compose caps Lantern at 1 GiB RAM and 128 processes; PostgreSQL needs additional memory. Allow disk space for indexes, WAL, images, imports, and backups. The application's 4 GB storage budget is a cleanup target, not a disk quota. Architecture and sustained-load testing remain outstanding.
+No measured minimum CPU/RAM specification is available. Compose caps Lantern at 1 GiB RAM and 128 processes; PostgreSQL needs additional memory. Allow disk space for indexes, WAL, images, imports, and backups. The application's 4 GB storage budget is a cleanup target, not a disk quota. The published 0.1.1 image passed native AMD64 and ARM64 deployment tests; sustained-load testing remains outstanding.
 
 Outbound access is needed for images/npm packages, enabled sources, Cinemeta, and Real-Debrid. Remote clients need a reachable HTTPS origin. PostgreSQL is private to the Compose network.
 

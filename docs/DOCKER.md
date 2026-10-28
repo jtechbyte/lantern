@@ -67,7 +67,7 @@ The 0.1.1 image-packaging release does not introduce a database schema change. S
 
 ## Backup, restore, rollback, and updates
 
-Use [Operations](OPERATIONS.md), adding `-f compose.image.yaml` immediately after `docker compose` throughout its commands. In its restore/rollback commands that already list files, replace the base `-f compose.yaml` with `-f compose.image.yaml`. For pull-based deployment omit `--build`; use `--no-build` instead. Keep the same project identity and apply the documented private overrides deliberately.
+Use [Operations](OPERATIONS.md) for complete copy-and-paste backup, restore, and rollback commands. They use `compose.image.yaml` directly. Keep the same project identity and include any private override files on every command.
 
 Before an update, dump PostgreSQL, save `.env` and source/deployment configuration, and record the current image digest. Pull your chosen version and recreate only Lantern as above. Verify health, login, saved preferences, and installation identity after each update.
 

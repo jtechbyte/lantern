@@ -7,7 +7,9 @@ Only changes established by the local source and audit records are listed. There
 - Multi-stage non-root runtime image with production dependencies, migration/maintenance tools, and OCI source/version/license metadata.
 - Pull-based Compose deployment preserving PostgreSQL services and volume identity.
 - Native AMD64/ARM64 build and runtime checks; release-only publication, separate stable/prerelease tags, and anonymous post-publication checks.
-- No database schema or UI layout changes. See [Docker deployment](docs/DOCKER.md) for actual publication and verification status.
+- Published `jctechmin/lantern:0.1.1` on Docker Hub for linux/amd64 and linux/arm64; both passed anonymous pull and native deployment checks.
+- Complete published-image installation and maintenance instructions, with a sanitized environment reference and isolated clean-install workflow.
+- No database schema or UI layout changes. See [verification results](docs/DOCKER_VERIFICATION.md).
 
 ## 0.1.0 — initial release candidate
 

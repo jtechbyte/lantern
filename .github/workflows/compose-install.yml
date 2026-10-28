@@ -1,0 +1,42 @@
+name: Published Compose installation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, docs/published-compose-install]
+    paths:
+      - README.md
+      - compose.image.yaml
+      - scripts/setup.sh
+      - scripts/container-smoke.mjs
+      - .github/workflows/compose-install.yml
+
+permissions:
+  contents: read
+
+jobs:
+  clean-install:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    steps:
+      - name: Clone the documented repository
+        env:
+          REVIEW_REF: ${{ github.ref_name }}
+        run: git clone --branch "$REVIEW_REF" https://github.com/jtechbyte/lantern.git lantern
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - name: Install test-only browser dependencies
+        working-directory: lantern
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Follow the published-image installation and verify persistence
+        working-directory: lantern
+        run: |
+          export DOCKER_CONFIG=$(mktemp -d)
+          node scripts/container-smoke.mjs jctechmin/lantern:0.1.1 --documented-setup
