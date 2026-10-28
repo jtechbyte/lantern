@@ -30,6 +30,8 @@ docker compose -f compose.image.yaml logs --tail=100 lantern postgres
 
 For local evaluation open **http://localhost:7001**. Unlock with `ADMIN_TOKEN` from your private `.env`. In **Playback**, enter your Real-Debrid token, **Save configuration**, then **Test account**. Choose discovery sources, save, and use **Install in Stremio**.
 
+Open the dashboard at the exact origin configured in `PUBLIC_URL`. With the generated defaults, use `localhost`, not `127.0.0.1`, in your browser: writes from a different origin are rejected. The health-check command can still use `127.0.0.1`.
+
 For a remote server, configure `PUBLIC_URL` and HTTPS using [Installation](docs/INSTALLATION.md). A Stremio device cannot reach your server through its own localhost. Existing SQLite installations require an explicit migration.
 
 Setup preserves an existing `.env`; do not replace it with the blank [.env.example](.env.example). That reference distinguishes required secrets from optional networking and image settings. PostgreSQL stays on the internal Compose network, and saved data survives container recreation in named volumes. Lantern initializes the database on first startup.
