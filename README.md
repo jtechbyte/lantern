@@ -35,7 +35,9 @@ Real-Debrid is the only implemented playback provider. Streaming requires your o
 
 Monitoring refreshes an exact movie or episode; searching alone does not enable it. There are no email/push notifications, whole-show subscriptions, or automatic playback failover. Coverage and conservative matching are incomplete. Use sources and media you are authorized to access.
 
-## Quick start
+## Quick start — Docker Hub
+
+The project-maintained image is [`jctechmin/lantern`](https://hub.docker.com/r/jctechmin/lantern). The production Compose example pins `0.1.1`; see [image tags, publishing status, and deployment](docs/DOCKER.md). The original `compose.yaml` remains available for local source builds.
 
 Requires Docker Engine with the Compose plugin, Git (or a source archive), and OpenSSL. For Ubuntu, follow [Docker's installation instructions](https://docs.docker.com/engine/install/ubuntu/). Node is included in the image.
 
@@ -44,8 +46,9 @@ git clone https://github.com/jtechbyte/lantern.git
 cd lantern
 sh scripts/setup.sh
 # Edit .env for public HTTPS access; preserve generated secrets.
-docker compose config --quiet
-docker compose up -d --build --wait --wait-timeout 120
+docker compose -f compose.image.yaml config --quiet
+docker compose -f compose.image.yaml pull
+docker compose -f compose.image.yaml up -d --wait --wait-timeout 120
 curl -fsS http://127.0.0.1:7001/healthz
 ```
 
@@ -55,6 +58,7 @@ For a remote server, configure `PUBLIC_URL` and HTTPS using [Installation](docs/
 
 ## Documentation
 
+- [Docker Hub image, versions, and production deployment](docs/DOCKER.md)
 - [Installation, environment, HTTPS, migration, and first use](docs/INSTALLATION.md)
 - [User guide: every section and subtab](docs/USER_GUIDE.md)
 - [Updates, backup, restore, and rollback](docs/OPERATIONS.md)
@@ -66,7 +70,7 @@ For a remote server, configure `PUBLIC_URL` and HTTPS using [Installation](docs/
 
 ## Release status
 
-Version 0.1.0 is an initial release candidate. Automated checks exercise production handlers with isolated PostgreSQL-compatible storage and simulated providers. Native Docker/PostgreSQL deployment, public TLS routing, and authenticated Real-Debrid/Stremio playback still require environment-specific verification. See the release notes for exactly what was checked.
+Version 0.1.1 adds production image packaging and native container checks. See [Docker deployment](docs/DOCKER.md) for actual publication and architecture verification status. Public TLS routing and authenticated Real-Debrid/Stremio playback remain separate acceptance checks; automated tests do not establish universal playback availability.
 
 ## License
 

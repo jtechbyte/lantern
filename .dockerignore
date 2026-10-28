@@ -11,3 +11,12 @@ experiments
 *.tar
 *.tar.gz
 *.log
+test
+.github
+coverage
+*.dump
+*.sqlite*
+*.db
+.npmrc
+docs/*.md
+docs/images

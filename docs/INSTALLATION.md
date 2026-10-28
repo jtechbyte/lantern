@@ -1,5 +1,7 @@
 # Installing Lantern
 
+For the prebuilt Docker Hub image, use [Docker Hub deployment](DOCKER.md) and `compose.image.yaml`. The commands below retain the source-build route using `compose.yaml`; do not mix Compose files accidentally on an existing instance.
+
 ## Requirements
 
 The supplied deployment uses Node 24, PostgreSQL 17, and optionally Caddy 2 in containers. The host needs Docker Engine and a Compose plugin supporting `up --wait`, OpenSSL for `scripts/setup.sh`, and Git or an archive extractor. Follow [Docker's Ubuntu installation guide](https://docs.docker.com/engine/install/ubuntu/), then verify `docker version` and `docker compose version`. Node is not required on a Docker host.

@@ -37,7 +37,7 @@ export function createApp({ store, engine, rd, adminToken, publicUrl, signingKey
     next();
   });
   app.use(express.json({ limit: '512kb' }));
-  app.get('/healthz', async (req,res) => { try { await store.ping(); res.json({ status: 'ok', version: '0.1.0' }); } catch { res.status(503).json({ status: 'unavailable' }); } });
+  app.get('/healthz', async (req,res) => { try { await store.ping(); res.json({ status: 'ok', version: '0.1.1' }); } catch { res.status(503).json({ status: 'unavailable' }); } });
   app.use('/api', (req,res,next) => {
     if (!equal(req.get('authorization'), `Bearer ${adminToken}`)) return res.status(401).json({ error: 'Admin token required' });
     if (req.get('origin') && req.get('origin') !== publicUrl) return res.status(403).json({ error: 'Origin does not match PUBLIC_URL' });
@@ -153,7 +153,7 @@ export function createApp({ store, engine, rd, adminToken, publicUrl, signingKey
   });
   app.get('/a/:token/manifest.json', async (req,res) => {
     const settings = req.addonSettings;
-    res.json({ id: req.profile?`org.lantern.profile.${req.profile.id}`:'org.lantern.selfhosted', version: '0.1.0', name: settings.name, description: settings.description,
+    res.json({ id: req.profile?`org.lantern.profile.${req.profile.id}`:'org.lantern.selfhosted', version: '0.1.1', name: settings.name, description: settings.description,
       logo: settings.logo || `${publicUrl}/brand/lantern-mark.png`, catalogs: [], types: ['movie','series'],
       resources: [{ name: 'stream', types: ['movie','series'], idPrefixes: ['tt'] }],
       behaviorHints: { configurable: true, configurationRequired: false } });

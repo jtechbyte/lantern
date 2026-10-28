@@ -1,0 +1,137 @@
+name: Docker image
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docker-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  metadata:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      revision: ${{ steps.meta.outputs.revision }}
+      tags: ${{ steps.meta.outputs.tags }}
+      created: ${{ steps.meta.outputs.created }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - id: meta
+        run: node scripts/image-tags.mjs
+
+  build-test:
+    needs: metadata
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - run: npm ci
+      - run: npm test
+      - run: npx playwright install --with-deps chromium
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          load: true
+          push: false
+          platforms: linux/${{ matrix.arch }}
+          tags: lantern:ci
+          build-args: |
+            VERSION=${{ needs.metadata.outputs.version }}
+            REVISION=${{ needs.metadata.outputs.revision }}
+            CREATED=${{ needs.metadata.outputs.created }}
+      - name: Test image against real PostgreSQL
+        run: node scripts/container-smoke.mjs lantern:ci
+      # PR and branch checks never receive registry credentials or publish images.
+      - name: Docker Hub login
+        if: github.event_name == 'release' && github.repository == 'jtechbyte/lantern'
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Push the exact tested native image
+        if: github.event_name == 'release' && github.repository == 'jtechbyte/lantern'
+        env:
+          REVISION: ${{ needs.metadata.outputs.revision }}
+          ARCH: ${{ matrix.arch }}
+        run: |
+          docker tag lantern:ci "jctechmin/lantern:sha-$REVISION-$ARCH"
+          docker push "jctechmin/lantern:sha-$REVISION-$ARCH"
+
+  publish:
+    if: github.event_name == 'release' && github.repository == 'jtechbyte/lantern'
+    needs: [metadata, build-test]
+    runs-on: ubuntu-24.04
+    outputs:
+      digest: ${{ steps.manifest.outputs.digest }}
+    steps:
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - id: manifest
+        name: Publish version and commit manifests
+        env:
+          TAGS: ${{ needs.metadata.outputs.tags }}
+          REVISION: ${{ needs.metadata.outputs.revision }}
+        run: |
+          set -euo pipefail
+          args=()
+          while IFS= read -r tag; do args+=(--tag "jctechmin/lantern:$tag"); done < <(jq -r '.[]' <<< "$TAGS")
+          docker buildx imagetools create "${args[@]}" \
+            "jctechmin/lantern:sha-$REVISION-amd64" "jctechmin/lantern:sha-$REVISION-arm64"
+          digest=$(docker buildx imagetools inspect "jctechmin/lantern:sha-$REVISION" --format '{{json .Manifest}}' | jq -r '.digest')
+          [[ "$digest" =~ ^sha256:[a-f0-9]{64}$ ]]
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "Published jctechmin/lantern@$digest" >> "$GITHUB_STEP_SUMMARY"
+          echo "$TAGS" >> "$GITHUB_STEP_SUMMARY"
+
+  verify-public:
+    needs: [metadata, publish]
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Pull anonymously and verify published deployment
+        env:
+          IMAGE: jctechmin/lantern@${{ needs.publish.outputs.digest }}
+        run: |
+          export DOCKER_CONFIG=$(mktemp -d)
+          docker pull "$IMAGE"
+          node scripts/container-smoke.mjs "$IMAGE"

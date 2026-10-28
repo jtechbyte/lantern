@@ -2,6 +2,13 @@
 
 Only changes established by the local source and audit records are listed. There was no Git history or prior public release tag in the reviewed project; internal ZIP revisions are not presented as separate public releases.
 
+## 0.1.1 — Docker image packaging
+
+- Multi-stage non-root runtime image with production dependencies, migration/maintenance tools, and OCI source/version/license metadata.
+- Pull-based Compose deployment preserving PostgreSQL services and volume identity.
+- Native AMD64/ARM64 build and runtime checks; release-only publication, separate stable/prerelease tags, and anonymous post-publication checks.
+- No database schema or UI layout changes. See [Docker deployment](docs/DOCKER.md) for actual publication and verification status.
+
 ## 0.1.0 — initial release candidate
 
 ### Included
