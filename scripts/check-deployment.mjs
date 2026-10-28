@@ -1,4 +1,6 @@
 // Read-only checks; no provider credentials or private installation URL needed.
+import { readFileSync } from 'node:fs';
+const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const input = process.argv[2] || 'http://localhost:7001';
 let origin;
 try {
@@ -25,7 +27,7 @@ async function check(label, path, verify) {
 }
 await check('Health endpoint', '/healthz', async r => {
   require(r.ok && (r.headers.get('content-type') || '').includes('application/json'), 'Expected JSON health response.');
-  const body=await r.json();require(body.status === 'ok' && body.version === '0.1.0', 'Unexpected health response.');
+  const body=await r.json();require(body.status === 'ok' && body.version === version, 'Unexpected health response or version mismatch.');
 });
 await check('Dashboard', '/', async r => {
   require(r.ok, `Dashboard returned HTTP ${r.status}.`);
