@@ -2,7 +2,7 @@
 
 Lantern's project-maintained image is **[jctechmin/lantern](https://hub.docker.com/r/jctechmin/lantern)**. It is published by this project's GitHub Actions workflow; it is not part of Docker's separately curated Official Images library.
 
-The intended first stable image is `jctechmin/lantern:0.1.1`. Check the [Docker workflow](https://github.com/jtechbyte/lantern/actions/workflows/docker.yml) and release notes before deploying: image availability and verification are established only by a successful publication run. Builds target `linux/amd64` and `linux/arm64`, using native runners for each. Do not equate a manifest entry with a passed runtime test; the workflow reports both separately.
+The first stable image, `jctechmin/lantern:0.1.1`, was published and verified on 2026-10-28. Both `linux/amd64` and `linux/arm64` passed anonymous pulling and native runtime tests in the [successful release workflow](https://github.com/jtechbyte/lantern/actions/runs/40717198291). See the [verification report](DOCKER_VERIFICATION.md) for exact tags, digest, checks, and remaining limitations.
 
 ## Fresh installation
 
