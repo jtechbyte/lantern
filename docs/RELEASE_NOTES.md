@@ -1,4 +1,16 @@
-# Lantern 0.1.0 — initial release candidate
+# Lantern release notes
+
+## 0.1.1 — published Docker image
+
+The public image [jctechmin/lantern:0.1.1](https://hub.docker.com/r/jctechmin/lantern) supports `linux/amd64` and `linux/arm64`. Both architectures passed native build tests and anonymous pull/deployment verification. Use the [published-image Compose installation](DOCKER.md); local source builds remain optional.
+
+The release includes production dependencies, non-root execution, image health checks, PostgreSQL persistence, migration tools, and source/version/license metadata. It makes no database schema or dashboard layout changes. Preserve the original `.env`, encryption key, and Compose project identity on existing installations.
+
+See [exact tags, digest, and verification evidence](DOCKER_VERIFICATION.md). Public TLS/proxy routing, live Real-Debrid/Stremio playback, and rollback to older application images remain unverified by these checks.
+
+## 0.1.0 — historical initial release candidate
+
+The following records the checks and limitations at the original source-only release. Native container, PostgreSQL outage, and dump/restore verification was subsequently completed for 0.1.1 as described above; other listed gaps remain separate acceptance checks.
 
 Lantern provides a private dashboard and self-hosted Stremio discovery using a local PostgreSQL index, direct source adapters, optional DMM imports, and Real-Debrid playback resolution. It includes editable presentation/filters, explicit title monitoring, manual imports, activity details, and isolated invited profiles.
 
