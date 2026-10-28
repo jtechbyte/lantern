@@ -1,0 +1,3 @@
+{$DOMAIN} {
+    reverse_proxy lantern:7001
+}

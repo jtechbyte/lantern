@@ -1,0 +1,72 @@
+services:
+  lantern:
+    build: .
+    restart: unless-stopped
+    init: true
+    env_file: .env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 7001
+      DATA_DIR: /app/data
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: lantern
+      PGUSER: lantern
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Run setup or add POSTGRES_PASSWORD to .env}
+      DATABASE_URL: ""
+      SQLITE_PATH: /app/data/lantern.sqlite
+    ports:
+      - "${LANTERN_BIND_ADDRESS:-127.0.0.1}:7001:7001"
+    volumes:
+      # Retained read-only for migration/rollback from pre-PostgreSQL releases.
+      - lantern_data:/app/data:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 1g
+    stop_grace_period: 45s
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: lantern
+      POSTGRES_USER: lantern
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run setup or add POSTGRES_PASSWORD to .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lantern -d lantern"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    stop_grace_period: 60s
+  caddy:
+    image: caddy:2-alpine
+    profiles: [https]
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      lantern:
+        condition: service_healthy
+volumes:
+  lantern_data:
+  postgres_data:
+  caddy_data:
+  caddy_config:

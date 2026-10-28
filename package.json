@@ -1,0 +1,38 @@
+{
+  "name": "lantern-addon",
+  "version": "0.1.0",
+  "description": "Self-hosted Stremio addon with direct public-source discovery",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/main.mjs",
+    "setup": "node scripts/setup.mjs",
+    "doctor": "node --env-file-if-exists=.env scripts/doctor.mjs",
+    "migrate:sqlite": "node --env-file-if-exists=.env scripts/migrate-sqlite.mjs",
+    "test": "node --test",
+    "check:browser": "node scripts/browser-smoke.mjs",
+    "check:deployment": "node scripts/check-deployment.mjs",
+    "check:rd-name": "node scripts/check-rd-name.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "dependencies": {
+    "cheerio": "^1.2.0",
+    "express": "^5.3.0",
+    "lz-string": "1.5.0",
+    "pg": "^8.23.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.11",
+    "playwright": "^1.64.1",
+    "yaml": "^2.9.1"
+  }
+}

@@ -1,0 +1,13 @@
+node_modules
+.env
+.env.*
+data
+.git
+docs/observed-configure.html
+backups
+artifacts
+experiments
+*.zip
+*.tar
+*.tar.gz
+*.log

@@ -1,0 +1,21 @@
+{
+  "version": "dmm-observed-2026-10-14",
+  "observedAt": "2026-10-14",
+  "reviewedAt": "2026-10-26",
+  "basis": "Third-party empirical observations, not an official Real-Debrid specification",
+  "source": "https://www.patreon.com/debridmediamanager/posts/complete-list-of-158388927",
+  "corroboration": "https://github.com/debridmediamanager/debrid-media-manager/blob/af36fda5246a192e7ac91aff6be040f172a66dac/src/utils/deInfringe.ts",
+  "patterns": [
+    { "id": "web-dl", "literal": "WEB-DL", "caseSensitive": true },
+    { "id": "web-x264", "literal": "WEB.x264", "caseSensitive": true },
+    { "id": "web-h264", "literal": "WEB.H264", "caseSensitive": true },
+    { "id": "webrip", "literal": "WEBRip", "caseSensitive": false },
+    { "id": "bdrip", "literal": "BDRip", "caseSensitive": false },
+    { "id": "hdrip", "literal": "HDRip", "caseSensitive": false },
+    { "id": "dvdrip", "literal": "DVDRip", "caseSensitive": false },
+    { "id": "hdtv-x264", "literal": "HDTV.x264", "caseSensitive": false },
+    { "id": "hdtv-xvid", "literal": "HDTV.XviD", "caseSensitive": false },
+    { "id": "bluray-x264", "literal": "BluRay.x264", "caseSensitive": false },
+    { "id": "p-bluray-dts", "literal": "p.BluRay.DTS", "caseSensitive": false }
+  ]
+}

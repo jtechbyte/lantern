@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lantern · Your profile</title><link rel="icon" href="/brand/lantern-mark.png"><link rel="stylesheet" href="/style.css"><script src="/account.js" defer></script></head>
+<body class="account-page">
+<header><a class="brand" href="/account"><img class="brand-mark" src="/brand/lantern-mark.png" width="40" height="40" alt=""><span id="account-brand">Lantern</span></a><span class="tag">YOUR PRIVATE PROFILE</span><button id="account-lock" class="secondary" hidden>Lock profile</button></header>
+<main class="account-main">
+<section id="account-entry" class="card account-entry">
+  <p class="eyebrow">INVITE ONLY</p><h1>Your streaming profile</h1>
+  <div id="claim-panel" hidden><p>This invitation creates your own private profile. Use your own Real-Debrid account; the server owner's account is not shared.</p><button id="claim-invite" type="button">Accept invitation</button><p class="muted">Invitations expire after 48 hours and can be used once.</p></div>
+  <form id="account-login"><p>Open your saved private management link, or paste it here. If you lost it, ask the server owner for a new invitation.</p><label for="management-access">Management link or access key</label><input id="management-access" type="password" required autocomplete="off"><button>Unlock profile</button></form>
+</section>
+<section id="account-profile" hidden>
+  <p class="eyebrow">YOUR SETTINGS</p><h1 id="profile-label">Your profile</h1>
+  <div class="account-grid">
+    <section class="card"><h2>Playback preferences</h2><p class="muted">Availability is checked when you select a stream. Highest resolution comes first. Your provider token is stored encrypted on this server.</p>
+      <form id="profile-form">
+        <label>Real-Debrid API token<input name="rdToken" type="password" maxlength="300" autocomplete="new-password" placeholder="Leave blank to keep your saved token"></label><p id="profile-rd-status" class="muted"></p>
+        <div class="two"><label>Maximum results<input name="maxResults" type="number" min="1" max="50" required></label><label>Results per resolution<input name="perQuality" type="number" min="1" max="20" required></label></div>
+        <div class="two"><label>Maximum GiB (0 = unlimited)<input name="maxSizeGB" type="number" min="0" max="200" step="0.1" required></label><label>Preferred language<select name="preferLanguage"><option value="any">No preference</option><option value="english">English</option><option value="spanish">Spanish</option><option value="french">French</option><option value="german">German</option><option value="italian">Italian</option><option value="portuguese">Portuguese</option><option value="japanese">Japanese</option></select></label></div>
+        <label class="check"><input name="excludeCam" type="checkbox">Exclude CAM / telesync</label>
+        <details><summary>Quality and formatter settings</summary>
+          <fieldset><legend>Exclude resolutions</legend><div id="profile-qualities" class="chips"></div></fieldset>
+          <label>Within each resolution<select name="sort"><option value="quality">Seeders (default)</option><option value="seeders">Seeders</option><option value="size">Size</option></select></label>
+          <label>Filename compatibility<select name="rdFilenameMode"><option value="warn">Warn about predicted rejections</option><option value="hide">Hide matches on known original names</option><option value="off">Off</option></select></label>
+          <label>Source layout<select name="sourceFormat"><option value="clear">Lantern Clear</option><option value="compact">Lantern Compact</option><option value="detailed">Lantern Detailed</option></select></label>
+          <label class="check"><input name="formatIcons" type="checkbox">Show icons</label><label class="check"><input name="formatSeeders" type="checkbox">Show reported seeders</label>
+        </details>
+        <div class="actions"><button>Save my settings</button><button id="profile-rd-test" type="button" class="secondary">Test saved account</button><button id="profile-rd-clear" type="button" class="secondary">Remove token</button></div>
+      </form>
+    </section>
+    <section class="card"><h2>Your private links</h2><p>Save your management link somewhere private. It grants access to your profile. Do not share either link.</p>
+      <label>Management link<input id="profile-management-url" readonly></label><button id="copy-management" class="secondary" type="button">Copy management link</button>
+      <label>Stremio installation link<input id="profile-install-url" readonly></label><div class="actions"><a id="profile-install" class="button" href="#">Install in Stremio</a><button id="copy-profile-install" class="secondary" type="button">Copy URL</button></div>
+      <details><summary>Replace installation link</summary><p class="muted">Invalidates your old Lantern link. Reinstall the addon afterward.</p><button id="profile-rotate" class="secondary" type="button">Replace my installation link</button></details>
+      <p class="muted">Source discovery and filename indexing rules are managed by the server owner. Your filters and provider token are separate. The owner can revoke your access. Encryption protects stored data, but the server operator controls the server; use a server you trust.</p>
+    </section>
+  </div>
+</section>
+<p id="account-notice" role="status" aria-live="polite"></p>
+</main></body></html>
