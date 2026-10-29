@@ -2,14 +2,6 @@ name: Published Compose installation
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main, docs/published-compose-install]
-    paths:
-      - README.md
-      - compose.image.yaml
-      - scripts/setup.sh
-      - scripts/container-smoke.mjs
-      - .github/workflows/compose-install.yml
 
 permissions:
   contents: read
@@ -39,4 +31,4 @@ jobs:
         working-directory: lantern
         run: |
           export DOCKER_CONFIG=$(mktemp -d)
-          node scripts/container-smoke.mjs jctechmin/lantern:0.1.1 --documented-setup
+          node scripts/container-smoke.mjs jctechmin/lantern:0.1.2 --documented-setup

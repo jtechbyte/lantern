@@ -45,13 +45,13 @@ The source archive includes `.env` and deployment configuration. Confirm the dum
 
 ## Update
 
-Read release notes and create the backup above first. Set `LANTERN_IMAGE` in `.env` to your selected stable image tag or digest; the current default is `jctechmin/lantern:0.1.1`. For a Git checkout, inspect local modifications before choosing a published tag:
+Read release notes and create the backup above first. Set `LANTERN_IMAGE` in `.env` to your selected stable image tag or digest; the current default is `jctechmin/lantern:0.1.2`. For a Git checkout, inspect local modifications before choosing a published tag:
 
 ```sh
 git status --short
 git fetch --tags origin
 # Replace this with the actual published release tag you selected.
-git switch --detach v0.1.1
+git switch --detach v0.1.2
 docker compose -f compose.image.yaml config --quiet
 docker compose -f compose.image.yaml pull lantern
 docker compose -f compose.image.yaml up -d --no-build --wait --wait-timeout 120 lantern
@@ -95,7 +95,7 @@ docker compose -f compose.image.yaml -f compose.restore.yaml up -d --no-build --
 curl -fsS http://127.0.0.1:7001/healthz
 ```
 
-Keep using both `-f` arguments until the chosen database is deliberately made permanent in deployment configuration. Verify settings decrypt, counts and installation identities match, and profiles work. Native PostgreSQL dump/restore into a separate database was verified on AMD64 and ARM64 during the [0.1.1 image release](DOCKER_VERIFICATION.md). Recovery of your own backup still needs verification; older-image rollback was not tested.
+Keep using both `-f` arguments until the chosen database is deliberately made permanent in deployment configuration. Verify settings decrypt, counts and installation identities match, and profiles work. Native PostgreSQL dump/restore into a separate database was verified on AMD64 and ARM64 during the [0.1.2 image release](DOCKER_VERIFICATION.md). Recovery of your own backup still needs verification; older-image rollback was not tested.
 
 ## Rollback
 

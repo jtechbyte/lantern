@@ -52,6 +52,7 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npx playwright install --with-deps chromium
+      - run: node scripts/database-size-browser.mjs
       - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
       - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
@@ -66,6 +67,10 @@ jobs:
             CREATED=${{ needs.metadata.outputs.created }}
       - name: Test image against real PostgreSQL
         run: node scripts/container-smoke.mjs lantern:ci
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: overview-${{ matrix.arch }}
+          path: artifacts/database-size-*.png
       # PR and branch checks never receive registry credentials or publish images.
       - name: Docker Hub login
         if: github.event_name == 'release' && github.repository == 'jtechbyte/lantern'
@@ -102,7 +107,7 @@ jobs:
         run: |
           set -euo pipefail
           args=()
-          while IFS= read -r tag; do args+=(--tag "jctechmin/lantern:$tag"); done < <(jq -r '.[]' <<< "$TAGS")
+          while IFS= read -r tag; do args+=(--tag "jctechmin/lantern:$tag"); done < <(jq -r '.[] | select(test("^sha-|^[0-9]+\\.[0-9]+\\.[0-9]+"))' <<< "$TAGS")
           docker buildx imagetools create "${args[@]}" \
             "jctechmin/lantern:sha-$REVISION-amd64" "jctechmin/lantern:sha-$REVISION-arm64"
           digest=$(docker buildx imagetools inspect "jctechmin/lantern:sha-$REVISION" --format '{{json .Manifest}}' | jq -r '.digest')
@@ -135,3 +140,22 @@ jobs:
           export DOCKER_CONFIG=$(mktemp -d)
           docker pull "$IMAGE"
           node scripts/container-smoke.mjs "$IMAGE"
+
+  promote-stable:
+    needs: [metadata, publish, verify-public]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Promote verified stable aliases
+        env:
+          TAGS: ${{ needs.metadata.outputs.tags }}
+          DIGEST: ${{ needs.publish.outputs.digest }}
+        run: |
+          set -euo pipefail
+          args=()
+          while IFS= read -r tag; do args+=(--tag "jctechmin/lantern:$tag"); done < <(jq -r '.[] | select(. == "latest" or test("^[0-9]+(\\.[0-9]+)?$"))' <<< "$TAGS")
+          if (( ${#args[@]} )); then docker buildx imagetools create "${args[@]}" "jctechmin/lantern@$DIGEST"; fi

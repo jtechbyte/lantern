@@ -108,3 +108,7 @@ Recipients accept the invitation, save their private management link, enter thei
 Guests share the discovery index but cannot access owner controls, owner manual mappings, or another user's credentials. The operator holds the encryption key and must be trusted. Using the same provider token in multiple profiles still means the same provider account.
 
 **Revoke** invalidates management/invitation/installation access and erases the stored provider token. Already-issued provider URLs or active transfers may work until the provider expires them. **Remove** deletes the profile and frees capacity. Lost management links are not recoverable through the dashboard; revoke/remove and invite again. Neither action deletes anything from the remote provider account.
+
+### Overview database size
+
+Database size measures the whole connected PostgreSQL database, including tables and indexes. It excludes cluster-wide WAL, backups, and other databases. Units are decimal (1 KB = 1,000 bytes); focus or hover over the value for exact bytes and the measurement time. Overview refreshes approximately every ten seconds while visible, with a shared five-second server cache. Failed measurements show Unavailable, or retain a clearly marked stale value and its original timestamp. Deleting rows does not necessarily reduce PostgreSQL allocation immediately.

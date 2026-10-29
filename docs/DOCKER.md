@@ -2,7 +2,7 @@
 
 Lantern's project-maintained image is **[jctechmin/lantern](https://hub.docker.com/r/jctechmin/lantern)**. It is published by this project's GitHub Actions workflow; it is not part of Docker's separately curated Official Images library.
 
-The first stable image, `jctechmin/lantern:0.1.1`, was published and verified on 2026-10-28. Both `linux/amd64` and `linux/arm64` passed anonymous pulling and native runtime tests in the [successful release workflow](https://github.com/jtechbyte/lantern/actions/runs/40717198291). See the [verification report](DOCKER_VERIFICATION.md) for exact tags, digest, checks, and remaining limitations.
+The recommended image is `jctechmin/lantern:0.1.2`, adding a live PostgreSQL size card. Check the [0.1.2 verification report](DATABASE_SIZE_0.1.2.md) for publication and native architecture test results. The original 0.1.1 release evidence remains in [Docker verification](DOCKER_VERIFICATION.md).
 
 ## Fresh installation
 
@@ -38,11 +38,11 @@ With an existing proxy, leave the profile off and follow [proxy networking guida
 
 ## Versions, aliases, and digests
 
-The Compose example defaults to the exact stable tag `0.1.1`. Override it in `.env` with `LANTERN_IMAGE`, for example `LANTERN_IMAGE=jctechmin/lantern:0.1.1`. For immutable deployment, use the manifest digest reported by the successful publishing workflow: `LANTERN_IMAGE=jctechmin/lantern@sha256:YOUR_VERIFIED_DIGEST`. The placeholder is not a usable digest.
+The Compose example defaults to the exact stable tag `0.1.2`. Override it in `.env` with `LANTERN_IMAGE`, for example `LANTERN_IMAGE=jctechmin/lantern:0.1.2`. For immutable deployment, use the manifest digest reported by the successful publishing workflow: `LANTERN_IMAGE=jctechmin/lantern@sha256:YOUR_VERIFIED_DIGEST`. The placeholder is not a usable digest.
 
 | Tag | Behavior |
 | --- | --- |
-| `0.1.1` | Stable version tag for this release. |
+| `0.1.2` | Stable version tag for this release. |
 | `0.1` | Moves with stable patch releases in this minor line. |
 | `0` | Moves with stable releases in the major-zero line; use a specific version for control. |
 | `latest` | Moves only when publishing a stable GitHub release, never a branch or prerelease. Pulling/recreating is still required; it does not auto-update running containers. |
@@ -65,7 +65,7 @@ docker compose -f compose.image.yaml up -d --no-build --wait --wait-timeout 120 
 docker compose -f compose.image.yaml ps
 ```
 
-The 0.1.1 image-packaging release does not introduce a database schema change. Startup still applies existing numbered migrations. SQLite-to-PostgreSQL migration remains explicit and requires the old volume and original encryption key. Use `docker compose -f compose.image.yaml run --rm lantern npm run migrate:sqlite` only after following the legacy migration prerequisites in Installation.
+The 0.1.2 image-packaging release does not introduce a database schema change. Startup still applies existing numbered migrations. SQLite-to-PostgreSQL migration remains explicit and requires the old volume and original encryption key. Use `docker compose -f compose.image.yaml run --rm lantern npm run migrate:sqlite` only after following the legacy migration prerequisites in Installation.
 
 ## Backup, restore, rollback, and updates
 

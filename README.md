@@ -10,7 +10,7 @@ The dashboard explains what was found, why results were excluded, and whether a 
 
 ## Quick start — Docker Hub
 
-Published for **linux/amd64 and linux/arm64**, the project-maintained image is [`jctechmin/lantern`](https://hub.docker.com/r/jctechmin/lantern). The production Compose example pins `0.1.1`; see [image tags, publishing status, and deployment](docs/DOCKER.md). The original `compose.yaml` remains available for local source builds.
+Published for **linux/amd64 and linux/arm64**, the project-maintained image is [`jctechmin/lantern`](https://hub.docker.com/r/jctechmin/lantern). The production Compose example pins `0.1.2`; see [image tags, publishing status, and deployment](docs/DOCKER.md). The original `compose.yaml` remains available for local source builds.
 
 Requires Docker Engine with the Compose plugin, Git (or a source archive), and OpenSSL. For Ubuntu, follow [Docker's installation instructions](https://docs.docker.com/engine/install/ubuntu/). Node is included in the image.
 
@@ -48,9 +48,9 @@ docker compose -f compose.image.yaml up -d --no-build --wait --wait-timeout 120 
 curl -fsS http://127.0.0.1:7001/healthz
 ```
 
-Follow the [restore](docs/OPERATIONS.md#restore-without-overwriting-the-existing-database) and [rollback](docs/OPERATIONS.md#rollback) procedures to recover into a separate database. Version 0.1.1 adds no schema migration, but older applications can reject databases upgraded by future releases; retain a matching pre-update backup. Never delete volumes to update or roll back.
+Follow the [restore](docs/OPERATIONS.md#restore-without-overwriting-the-existing-database) and [rollback](docs/OPERATIONS.md#rollback) procedures to recover into a separate database. Version 0.1.2 adds no schema migration, but older applications can reject databases upgraded by future releases; retain a matching pre-update backup. Never delete volumes to update or roll back.
 
-The published `latest` tag tracks stable releases and can change; it does not automatically update running containers. The recommended deployment uses `0.1.1`. For local source builds, follow [the separate source-build instructions](docs/INSTALLATION.md) using `compose.yaml` and `--build`. Do not mix the two Compose files or overwrite an existing deployment's customizations.
+The published `latest` tag tracks stable releases and can change; it does not automatically update running containers. The recommended deployment uses `0.1.2`. For local source builds, follow [the separate source-build instructions](docs/INSTALLATION.md) using `compose.yaml` and `--build`. Do not mix the two Compose files or overwrite an existing deployment's customizations.
 
 ![Lantern Overview dashboard showing setup status and source health](docs/images/dashboard-overview.png)
 
@@ -93,7 +93,7 @@ Monitoring refreshes an exact movie or episode; searching alone does not enable 
 
 ## Release status
 
-Version 0.1.1 adds production image packaging and native container checks. See [Docker deployment](docs/DOCKER.md) for actual publication and architecture verification status. Public TLS routing and authenticated Real-Debrid/Stremio playback remain separate acceptance checks; automated tests do not establish universal playback availability.
+Version 0.1.2 adds production image packaging and native container checks. See [Docker deployment](docs/DOCKER.md) for actual publication and architecture verification status. Public TLS routing and authenticated Real-Debrid/Stremio playback remain separate acceptance checks; automated tests do not establish universal playback availability.
 
 ## License
 

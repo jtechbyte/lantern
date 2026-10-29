@@ -36,7 +36,7 @@ try {
   copyFileSync('compose.image.yaml', join(directory, composeFile));
   copyFileSync('Caddyfile', join(directory, 'Caddyfile'));
   if (documentedSetup) {
-    assert.equal(image, 'jctechmin/lantern:0.1.1');
+    assert.equal(image, 'jctechmin/lantern:0.1.2');
     mkdirSync(join(directory, 'scripts'));
     copyFileSync('scripts/setup.sh', join(directory, 'scripts/setup.sh'));
     execFileSync('sh', ['scripts/setup.sh'], { cwd: directory });
@@ -83,6 +83,37 @@ try {
   await page.locator('#admin-token').fill(admin);
   await page.locator('#admin-token').press('Enter');
   await page.locator('#logout').waitFor({ state: 'visible' });
+  // Native accuracy and growth checks, only in this disposable database.
+  assert.equal((await fetch(`${base}/api/database-size`)).status, 401);
+  const sql = query => compose('exec', '-T', 'postgres', 'psql', '-U', 'lantern', '-d', 'lantern', '-At', '-c', query).trim();
+  sql('ALTER ROLE lantern NOSUPERUSER CREATEDB CREATEROLE');
+  assert.equal(sql("SELECT rolsuper FROM pg_roles WHERE rolname='lantern'"), 'f');
+  await new Promise(resolve=>setTimeout(resolve, 5500));
+  const direct = () => BigInt(sql('SELECT pg_database_size(current_database()) AS database_size_bytes;'));
+  const before = direct(), measurement = await api('database-size'), after = direct();
+  assert.equal(measurement.state, 'fresh');
+  assert.ok(BigInt(measurement.bytes)>=before && BigInt(measurement.bytes)<=after);
+  console.log(`PASS native non-superuser accuracy: SQL before=${before}, endpoint=${measurement.bytes}, SQL after=${after}, timestamp=${measurement.measuredAt}`);
+  sql('CREATE TABLE size_probe (id integer PRIMARY KEY, payload text); ALTER TABLE size_probe ALTER COLUMN payload SET STORAGE EXTERNAL; INSERT INTO size_probe SELECT i, repeat(md5(i::text),64) FROM generate_series(1,20000) i');
+  await new Promise(resolve=>setTimeout(resolve, 5500));
+  const grown = await api('database-size');
+  assert.ok(BigInt(grown.bytes)>BigInt(measurement.bytes)+10000000n);
+  await page.waitForFunction(bytes=>document.querySelector('#database-size').title.startsWith(bytes+' bytes.'), grown.bytes, {timeout:20000});
+  console.log(`PASS live database growth: ${measurement.bytes} -> ${grown.bytes} bytes; Overview updated without reload`);
+  mkdirSync('artifacts', {recursive:true});
+  for (const [width,height] of [[1858,846],[1366,768],[780,1024],[390,844]]) {
+    await page.setViewportSize({width,height});
+    await page.waitForTimeout(300);
+    const layout = await page.evaluate(()=>({width:innerWidth,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight,cards:[...document.querySelectorAll('.metrics .card')].map(el=>{const r=el.getBoundingClientRect();return {x:r.x,y:r.y,right:r.right,bottom:r.bottom,overflow:el.scrollWidth>el.clientWidth};})}));
+    assert.ok(layout.scrollWidth<=width, JSON.stringify(layout));
+    assert.equal(layout.cards.length,4);
+    assert.ok(layout.cards.every(c=>!c.overflow&&c.right<=width),JSON.stringify(layout));
+    if(width>=1100){assert.ok(layout.scrollHeight<=height,JSON.stringify(layout));assert.ok(layout.cards.every(c=>c.y===layout.cards[0].y));}
+    await page.screenshot({path:`artifacts/database-size-${width}x${height}.png`,fullPage:true});
+  }
+  console.log('PASS four-card desktop and responsive layouts at 1858x846, 1366x768, 780x1024, 390x844');
+  await page.setViewportSize({width:1366,height:768});
+  sql('DROP TABLE size_probe'); // Deleting data is not asserted to reclaim allocated size.
   await page.locator('#tab-appearance').click();
   await page.locator('[name=name]').fill('Container persistence test');
   await page.locator('button.save').click();

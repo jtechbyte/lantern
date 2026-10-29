@@ -2,6 +2,14 @@
 
 Only changes established by the local source and audit records are listed. There was no Git history or prior public release tag in the reviewed project; internal ZIP revisions are not presented as separate public releases.
 
+## 0.1.2 ? live database size
+
+- Fourth Overview card measures the connected PostgreSQL database, including tables and indexes, with decimal units and exact byte details.
+- Authenticated measurement endpoint returns bigint-safe byte strings and timestamps, coalesces concurrent requests, and caches measurements for five seconds.
+- Polls every ten seconds while Overview is visible; loading, unavailable, and stale states retain accurate timestamps.
+- Native accuracy/growth and responsive layout checks; browser lifecycle and formatting boundary tests.
+- Stable Docker aliases are promoted only after both anonymous architecture deployment checks pass. No schema migration or production-data changes.
+
 ## 0.1.1 — Docker image packaging
 
 - Multi-stage non-root runtime image with production dependencies, migration/maintenance tools, and OCI source/version/license metadata.

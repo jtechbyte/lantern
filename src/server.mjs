@@ -1,3 +1,4 @@
+import { databaseSizeReader } from './database-size.mjs';
 import express from 'express';
 import { formatSource, previewSource } from './formatter.mjs';
 import { z } from 'zod';
@@ -24,6 +25,7 @@ export function createApp({ store, engine, rd, adminToken, publicUrl, signingKey
   if (!adminToken || adminToken.length < 32) throw new Error('ADMIN_TOKEN must be at least 32 characters; run npm run setup');
   const app = express(); app.disable('x-powered-by'); app.disable('etag');
   const profiles = new Profiles(store);
+  const readDatabaseSize = databaseSizeReader(store.db);
   const limits = new Map();
   app.use((req,res,next) => {
     res.set({ 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', 'X-Frame-Options': 'DENY', 'Cache-Control': 'no-store',
@@ -37,7 +39,7 @@ export function createApp({ store, engine, rd, adminToken, publicUrl, signingKey
     next();
   });
   app.use(express.json({ limit: '512kb' }));
-  app.get('/healthz', async (req,res) => { try { await store.ping(); res.json({ status: 'ok', version: '0.1.1' }); } catch { res.status(503).json({ status: 'unavailable' }); } });
+  app.get('/healthz', async (req,res) => { try { await store.ping(); res.json({ status: 'ok', version: '0.1.2' }); } catch { res.status(503).json({ status: 'unavailable' }); } });
   app.use('/api', (req,res,next) => {
     if (!equal(req.get('authorization'), `Bearer ${adminToken}`)) return res.status(401).json({ error: 'Admin token required' });
     if (req.get('origin') && req.get('origin') !== publicUrl) return res.status(403).json({ error: 'Origin does not match PUBLIC_URL' });
@@ -66,6 +68,7 @@ export function createApp({ store, engine, rd, adminToken, publicUrl, signingKey
   });
   app.delete('/api/rd-token', async (req,res) => { await store.saveSettings({ ...(await store.settings()), rdToken: '', provider: 'realdebrid' }); rd.links.clear(); res.json({ ok: true }); });
   app.get('/api/status', async (req,res) => res.json({ ...await store.stats(), activeSearches: engine.inflight.size, activePlayback: rd.active.size }));
+  app.get('/api/database-size', async (req,res) => res.json(await readDatabaseSize()));
   app.get('/api/activity', async (req,res) => res.json({events:await store.activityHistory()}));
   app.post('/api/rotate-token', async (req,res) => { await store.rotateToken(); res.json({ installUrl: await installUrl() }); });
   app.post('/api/rd-test', async (req,res) => {
@@ -153,7 +156,7 @@ export function createApp({ store, engine, rd, adminToken, publicUrl, signingKey
   });
   app.get('/a/:token/manifest.json', async (req,res) => {
     const settings = req.addonSettings;
-    res.json({ id: req.profile?`org.lantern.profile.${req.profile.id}`:'org.lantern.selfhosted', version: '0.1.1', name: settings.name, description: settings.description,
+    res.json({ id: req.profile?`org.lantern.profile.${req.profile.id}`:'org.lantern.selfhosted', version: '0.1.2', name: settings.name, description: settings.description,
       logo: settings.logo || `${publicUrl}/brand/lantern-mark.png`, catalogs: [], types: ['movie','series'],
       resources: [{ name: 'stream', types: ['movie','series'], idPrefixes: ['tt'] }],
       behaviorHints: { configurable: true, configurationRequired: false } });
