@@ -37,7 +37,11 @@ try{
   await page.locator('#admin-token').fill(admin);await page.locator('#admin-token').press('Enter');
   await page.waitForFunction(()=>document.querySelector('#database-size').textContent==='24.8 MB');
   assert.equal(queries,1);
-  const initialTitle=await page.locator('#database-size').getAttribute('title');
+  for(const [width,height] of [[1858,846],[1366,768],[1280,720]]){
+    await page.setViewportSize({width,height});
+    const bounds=await page.evaluate(()=>({width:document.documentElement.scrollWidth,height:document.documentElement.scrollHeight,debug:[...document.querySelectorAll('.dashboard-content,#panel-overview,.metrics,.setup-card,.dashboard-actions')].map(el=>({class:el.className,id:el.id,rect:el.getBoundingClientRect().toJSON(),padding:getComputedStyle(el).padding,min:getComputedStyle(el).minHeight,gap:getComputedStyle(el).gap,rows:getComputedStyle(el).gridTemplateRows}))}));
+    assert.ok(bounds.width<=width&&bounds.height<=height,JSON.stringify({viewport:[width,height],bounds}));
+  }
   // A second authenticated browser shares the server cache.
   const second=await browser.newPage();await second.goto(base);
   await second.locator('#admin-token').fill(admin);await second.locator('#admin-token').press('Enter');
@@ -53,8 +57,9 @@ try{
   assert.ok(await empty.locator('.database-metric').evaluate(el=>el.scrollWidth<=el.clientWidth),'Unavailable state must fit its card');
   await empty.close();
   await page.clock.fastForward(10001);await page.waitForTimeout(50);assert.equal(requests,2);
+  const lastTitle=await page.locator('#database-size').getAttribute('title');
   fail=true;await page.clock.fastForward(10001);await page.waitForFunction(()=>document.querySelector('.database-metric').dataset.state==='stale');
-  assert.equal(await page.locator('#database-size').getAttribute('title'),initialTitle);
+  assert.equal(await page.locator('#database-size').getAttribute('title'),lastTitle);
   fail=false;await page.clock.fastForward(10001);await page.waitForFunction(()=>document.querySelector('.database-metric').dataset.state==='fresh');
   await page.locator('#tab-appearance').click();const paused=requests;
   await page.clock.fastForward(30000);assert.equal(requests,paused);

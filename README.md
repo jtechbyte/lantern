@@ -52,9 +52,9 @@ Follow the [restore](docs/OPERATIONS.md#restore-without-overwriting-the-existing
 
 The published `latest` tag tracks stable releases and can change; it does not automatically update running containers. The recommended deployment uses `0.1.2`. For local source builds, follow [the separate source-build instructions](docs/INSTALLATION.md) using `compose.yaml` and `--build`. Do not mix the two Compose files or overwrite an existing deployment's customizations.
 
-![Lantern Overview dashboard showing setup status and source health](docs/images/dashboard-overview.png)
+![Lantern Overview with live PostgreSQL database size, setup status and source health](docs/images/dashboard-overview.png)
 
-*Actual application screenshot using isolated demonstration data. Statuses and counts are examples, not live provider measurements.*
+*Actual application screenshot from an isolated PostgreSQL growth test. Database size is measured; source statuses are test configuration, not live provider measurements.*
 
 ## Features
 
@@ -93,7 +93,7 @@ Monitoring refreshes an exact movie or episode; searching alone does not enable 
 
 ## Release status
 
-Version 0.1.2 adds production image packaging and native container checks. See [Docker deployment](docs/DOCKER.md) for actual publication and architecture verification status. Public TLS routing and authenticated Real-Debrid/Stremio playback remain separate acceptance checks; automated tests do not establish universal playback availability.
+Version 0.1.2 adds a live PostgreSQL database-size card and native accuracy/growth checks. See [Docker deployment](docs/DOCKER.md) for actual publication and architecture verification status. Public TLS routing and authenticated Real-Debrid/Stremio playback remain separate acceptance checks; automated tests do not establish universal playback availability.
 
 ## License
 
