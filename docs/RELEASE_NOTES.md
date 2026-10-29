@@ -1,5 +1,11 @@
 # Lantern release notes
 
+## 0.1.2 — live PostgreSQL size
+
+Overview now includes a live database-size card with bigint-safe exact bytes, decimal formatting, measurement timestamps, and honest unavailable/stale states. Polling stops outside the visible Overview; a shared five-second server cache coalesces browser requests. Existing settings, database schema, authentication, and dependencies remain unchanged.
+
+The public `jctechmin/lantern:0.1.2` image passed native build, anonymous pull and fresh Compose deployment checks on AMD64 and ARM64. Direct SQL and endpoint measurements matched exactly; isolated growth updated the live card. Stable aliases were promoted only after verification. See [the complete verification report and digest](DATABASE_SIZE_0.1.2.md), [Docker installation](DOCKER.md), and [recovery instructions](OPERATIONS.md).
+
 ## 0.1.1 — published Docker image
 
 The public image [jctechmin/lantern:0.1.1](https://hub.docker.com/r/jctechmin/lantern) supports `linux/amd64` and `linux/arm64`. Both architectures passed native build tests and anonymous pull/deployment verification. Use the [published-image Compose installation](DOCKER.md); local source builds remain optional.
