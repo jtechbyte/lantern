@@ -21,7 +21,7 @@ if (typeof document !== 'undefined') (() => {
     const formatted = formatDatabaseBytes(data?.bytes);
     if (formatted && Number.isFinite(Date.parse(data.measuredAt))) previous = data;
     const stale = !formatted || !Number.isFinite(Date.parse(data.measuredAt)) || data.state !== 'fresh';
-    value.textContent = previous ? formatDatabaseBytes(previous.bytes) : 'Unavailable';
+    value.textContent = previous ? formatDatabaseBytes(previous.bytes) : '—';
     card.dataset.state = previous ? (stale ? 'stale' : 'fresh') : 'unavailable';
     updated.textContent = previous ? (stale ? 'Stale - ' : 'Updated ') + new Date(previous.measuredAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'}) : 'Measurement unavailable';
     const text = previous ? previous.bytes + ' bytes. Measured ' + new Date(previous.measuredAt).toLocaleString() + '. ' + explanation : explanation;
@@ -45,10 +45,13 @@ if (typeof document !== 'undefined') (() => {
     if (active) { if (!controller) poll(); else resume = true; } else controller?.abort();
   }
   const observer = new MutationObserver(sync);
-  observer.observe(document.querySelector('#dashboard'), {attributes:true,attributeFilter:['hidden'],childList:true,subtree:true});
-  observer.observe(document.querySelector('#panel-overview'), {attributes:true,attributeFilter:['hidden']});
+  function observe() {
+    observer.observe(document.querySelector('#dashboard'), {attributes:true,attributeFilter:['hidden'],childList:true,subtree:true});
+  }
+  observe();
   window.addEventListener('dashboard-layout', sync);
   document.addEventListener('visibilitychange', sync);
   window.addEventListener('pagehide', () => { disposed=true; active=false; clearTimeout(timer); controller?.abort(); observer.disconnect(); });
+  window.addEventListener('pageshow', () => { disposed=false; observe(); sync(); });
   sync();
 })();

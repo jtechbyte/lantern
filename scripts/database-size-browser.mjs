@@ -47,7 +47,10 @@ try{
   await empty.route('**/api/database-size',route=>route.fulfill({status:503,body:'Unavailable'}));
   await empty.goto(base);assert.equal(await empty.locator('#database-size').textContent(),'Loading…');
   await empty.locator('#admin-token').fill(admin);await empty.locator('#admin-token').press('Enter');
-  await empty.waitForFunction(()=>document.querySelector('#database-size').textContent==='Unavailable');
+  await empty.waitForFunction(()=>document.querySelector('.database-metric').dataset.state==='unavailable');
+  assert.equal(await empty.locator('#database-size').textContent(),'—');
+  assert.equal(await empty.locator('#database-size-updated').textContent(),'Measurement unavailable');
+  assert.ok(await empty.locator('.database-metric').evaluate(el=>el.scrollWidth<=el.clientWidth),'Unavailable state must fit its card');
   await empty.close();
   await page.clock.fastForward(10001);await page.waitForTimeout(50);assert.equal(requests,2);
   fail=true;await page.clock.fastForward(10001);await page.waitForFunction(()=>document.querySelector('.database-metric').dataset.state==='stale');
@@ -63,6 +66,14 @@ try{
   hold=true;await page.clock.fastForward(10001);await page.waitForTimeout(50);const pending=requests;
   await page.evaluate(()=>{for(let i=0;i<10;i++)window.dispatchEvent(new Event('dashboard-layout'));});
   assert.equal(requests,pending);hold=false;release();await page.waitForTimeout(50);
+  await page.evaluate(()=>window.dispatchEvent(new Event('pagehide')));
+  const suspended=requests;await page.clock.fastForward(30000);assert.equal(requests,suspended);
+  await page.evaluate(()=>window.dispatchEvent(new Event('pageshow')));await page.waitForTimeout(50);
+  assert.equal(requests,suspended+1);
+  await page.evaluate(()=>{window.detachedMetric=document.querySelector('.database-metric');window.detachedMetric.remove();});
+  const detached=requests;await page.clock.fastForward(30000);assert.equal(requests,detached);
+  await page.evaluate(()=>document.querySelector('.metrics').append(window.detachedMetric));await page.waitForTimeout(50);
+  assert.equal(requests,detached+1);
   await page.locator('#logout').click();await page.locator('#admin-token').waitFor({state:'visible'});
   const locked=requests;await page.clock.fastForward(30000);assert.equal(requests,locked);
   console.log('PASS browser polling: immediate, 10-second cadence, no overlapping/duplicate requests, hidden/tab/lock lifecycle, stale timestamp, recovery, two-session cache (mocked SQL size, real HTTP/browser)');
