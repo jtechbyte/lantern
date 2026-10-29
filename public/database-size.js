@@ -23,7 +23,7 @@ if (typeof document !== 'undefined') (() => {
     const stale = !formatted || !Number.isFinite(Date.parse(data.measuredAt)) || data.state !== 'fresh';
     value.textContent = previous ? formatDatabaseBytes(previous.bytes) : 'Unavailable';
     card.dataset.state = previous ? (stale ? 'stale' : 'fresh') : 'unavailable';
-    updated.textContent = previous ? (stale ? 'Stale ? ' : 'Updated ') + new Date(previous.measuredAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'}) : 'Measurement unavailable';
+    updated.textContent = previous ? (stale ? 'Stale - ' : 'Updated ') + new Date(previous.measuredAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'}) : 'Measurement unavailable';
     const text = previous ? previous.bytes + ' bytes. Measured ' + new Date(previous.measuredAt).toLocaleString() + '. ' + explanation : explanation;
     value.title = text; detail.textContent = text;
   }

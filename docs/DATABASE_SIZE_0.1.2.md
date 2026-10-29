@@ -1,4 +1,4 @@
-# Database size ? 0.1.2 verification
+# Database size - 0.1.2 verification
 
 Implementation uses SELECT pg_database_size(current_database()) AS database_size_bytes against Lantern's connected database. Bytes travel as decimal strings without JavaScript Number conversion. The authenticated /api/database-size endpoint coalesces concurrent requests and caches for five seconds. Previous measurements keep their original timestamp after failure.
 

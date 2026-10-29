@@ -43,6 +43,12 @@ try{
   await second.locator('#admin-token').fill(admin);await second.locator('#admin-token').press('Enter');
   await second.waitForFunction(()=>document.querySelector('#database-size').textContent==='24.8 MB');
   assert.equal(queries,1);await second.close();
+  const empty=await browser.newPage();await empty.clock.install();
+  await empty.route('**/api/database-size',route=>route.fulfill({status:503,body:'Unavailable'}));
+  await empty.goto(base);assert.equal(await empty.locator('#database-size').textContent(),'Loading…');
+  await empty.locator('#admin-token').fill(admin);await empty.locator('#admin-token').press('Enter');
+  await empty.waitForFunction(()=>document.querySelector('#database-size').textContent==='Unavailable');
+  await empty.close();
   await page.clock.fastForward(10001);await page.waitForTimeout(50);assert.equal(requests,2);
   fail=true;await page.clock.fastForward(10001);await page.waitForFunction(()=>document.querySelector('.database-metric').dataset.state==='stale');
   assert.equal(await page.locator('#database-size').getAttribute('title'),initialTitle);

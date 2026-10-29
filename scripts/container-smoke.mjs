@@ -86,10 +86,10 @@ try {
   // Native accuracy and growth checks, only in this disposable database.
   assert.equal((await fetch(`${base}/api/database-size`)).status, 401);
   const sql = query => compose('exec', '-T', 'postgres', 'psql', '-U', 'lantern', '-d', 'lantern', '-At', '-c', query).trim();
-  sql('ALTER ROLE lantern NOSUPERUSER CREATEDB CREATEROLE');
-  assert.equal(sql("SELECT rolsuper FROM pg_roles WHERE rolname='lantern'"), 'f');
+  sql('CREATE ROLE lantern_size_reader LOGIN NOSUPERUSER; GRANT CONNECT ON DATABASE lantern TO lantern_size_reader');
+  assert.equal(sql("SELECT rolsuper FROM pg_roles WHERE rolname='lantern_size_reader'"), 'f');
   await new Promise(resolve=>setTimeout(resolve, 5500));
-  const direct = () => BigInt(sql('SELECT pg_database_size(current_database()) AS database_size_bytes;'));
+  const direct = () => BigInt(compose('exec', '-T', 'postgres', 'psql', '-U', 'lantern_size_reader', '-d', 'lantern', '-At', '-c', 'SELECT pg_database_size(current_database()) AS database_size_bytes;').trim());
   const before = direct(), measurement = await api('database-size'), after = direct();
   assert.equal(measurement.state, 'fresh');
   assert.ok(BigInt(measurement.bytes)>=before && BigInt(measurement.bytes)<=after);
@@ -138,6 +138,7 @@ try {
   console.log('PASS container restart, recreation and PostgreSQL restart preserve saved settings and credentials');
   assert.match(compose('exec', '-T', 'lantern', 'node', 'scripts/check-deployment.mjs', 'http://127.0.0.1:7001'), /All deployment checks passed/);
   assert.match(compose('logs', '--no-color', 'lantern'), /Lantern listening on port 7001/);
+  const lastSize = await api('database-size');
   compose('stop', 'postgres');
   let unavailable = false;
   for (let attempt = 0; attempt < 10; attempt++) {
@@ -146,7 +147,15 @@ try {
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
   assert.ok(unavailable, 'database outage should make health unavailable');
+  await new Promise(resolve=>setTimeout(resolve,5500));
+  const sizeDuringOutage = await fetch(`${base}/api/database-size`, {headers:{Authorization:`Bearer ${admin}`},signal:AbortSignal.timeout(30000)}).then(r=>r.json());
+  assert.equal(sizeDuringOutage.state,'stale');
+  assert.equal(sizeDuringOutage.measuredAt,lastSize.measuredAt);
+  assert.equal(sizeDuringOutage.bytes,lastSize.bytes);
   compose('up', '-d', '--wait', '--wait-timeout', '120'); await healthy(); await checkSaved();
+  await new Promise(resolve=>setTimeout(resolve,5500));
+  assert.equal((await api('database-size')).state,'fresh');
+  console.log('PASS real database size failure retains stale bytes/time, then recovers');
   console.log('PASS health failure/recovery on database outage and useful startup log');
   const dump = execFileSync('docker', [...composeArgs, 'exec', '-T', 'postgres', 'pg_dump', '-U', 'lantern', '-d', 'lantern', '-Fc'], { timeout: 60000, maxBuffer: 16 * 1024 * 1024 });
   assert.ok(dump.length > 0);

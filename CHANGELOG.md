@@ -2,7 +2,7 @@
 
 Only changes established by the local source and audit records are listed. There was no Git history or prior public release tag in the reviewed project; internal ZIP revisions are not presented as separate public releases.
 
-## 0.1.2 ? live database size
+## 0.1.2 - live database size
 
 - Fourth Overview card measures the connected PostgreSQL database, including tables and indexes, with decimal units and exact byte details.
 - Authenticated measurement endpoint returns bigint-safe byte strings and timestamps, coalesces concurrent requests, and caches measurements for five seconds.
