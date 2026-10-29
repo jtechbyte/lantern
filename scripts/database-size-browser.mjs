@@ -39,6 +39,7 @@ try{
   assert.equal(queries,1);
   for(const [width,height] of [[1858,846],[1366,768],[1280,720]]){
     await page.setViewportSize({width,height});
+    await page.clock.runFor(300); // Flush resize/requestAnimationFrame work under the test clock.
     const bounds=await page.evaluate(()=>({width:document.documentElement.scrollWidth,height:document.documentElement.scrollHeight,debug:[...document.querySelectorAll('.dashboard-content,#panel-overview,.metrics,.setup-card,.dashboard-actions')].map(el=>({class:el.className,id:el.id,rect:el.getBoundingClientRect().toJSON(),padding:getComputedStyle(el).padding,min:getComputedStyle(el).minHeight,gap:getComputedStyle(el).gap,rows:getComputedStyle(el).gridTemplateRows}))}));
     assert.ok(bounds.width<=width&&bounds.height<=height,JSON.stringify({viewport:[width,height],bounds}));
   }
