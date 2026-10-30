@@ -34,8 +34,10 @@ export async function verifyBrowserZoom({base,admin}) {
         }
       }
       await page.locator('#tab-overview').click();await page.evaluate(()=>scrollTo(0,0));
-      await page.screenshot({path:`artifacts/zoom/overview-${percent}-viewport.png`});
-      await page.screenshot({path:`artifacts/zoom/overview-${percent}-full.png`,fullPage:true});
+      // Capture the actual X window: CDP screenshots crop incorrectly at native zoom.
+      execFileSync('scrot',['--focused',`artifacts/zoom/overview-${percent}-window.png`]);
+      await page.locator('.dashboard-actions .save').scrollIntoViewIfNeeded();
+      execFileSync('scrot',['--focused',`artifacts/zoom/actions-${percent}-window.png`]);
       results.push({percent,...actual,controls});console.log('PASS actual browser zoom',JSON.stringify(results.at(-1)));
     }
     assert.deepEqual(errors,[]);writeFileSync('artifacts/zoom/results.json',JSON.stringify({baseline,results},null,2));

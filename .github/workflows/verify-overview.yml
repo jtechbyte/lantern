@@ -23,7 +23,7 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npx playwright install --with-deps chromium
-      - run: sudo apt-get update && sudo apt-get install -y xvfb xdotool
+      - run: sudo apt-get update && sudo apt-get install -y xvfb xdotool scrot
       - name: Build production Dockerfile locally on runner
         run: |
           docker build --tag lantern:verification \
@@ -33,7 +33,7 @@ jobs:
       - name: Isolated PostgreSQL container smoke and actual browser zoom
         env:
           VERIFY_BROWSER_ZOOM: '1'
-        run: xvfb-run -a node scripts/container-smoke.mjs lantern:verification
+        run: xvfb-run -a -s "-screen 0 1600x1200x24" node scripts/container-smoke.mjs lantern:verification
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
