@@ -1,0 +1,43 @@
+name: Overview production validation (no publishing)
+on:
+  push:
+    branches: [verification/overview-final]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm ci
+      - run: npm test
+      - run: npx playwright install --with-deps chromium
+      - run: sudo apt-get update && sudo apt-get install -y xvfb xdotool
+      - name: Build production Dockerfile locally on runner
+        run: |
+          docker build --tag lantern:verification \
+            --build-arg VERSION="$(node -p 'require("./package.json").version')" \
+            --build-arg REVISION="$GITHUB_SHA" \
+            --build-arg CREATED="$(date -u +%Y-%m-%dT%H:%M:%SZ)" .
+      - name: Isolated PostgreSQL container smoke and actual browser zoom
+        env:
+          VERIFY_BROWSER_ZOOM: '1'
+        run: xvfb-run -a node scripts/container-smoke.mjs lantern:verification
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: production-verification-${{ matrix.runner }}
+          path: |
+            artifacts/zoom/
+            artifacts/database-size-*.png

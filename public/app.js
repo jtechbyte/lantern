@@ -73,7 +73,12 @@ async function status() {
     const healthLabel = !h ? 'untested' : Date.now()-h.checkedAt>86400000 ? 'stale' : h.status==='ok' ? 'responded' : h.status;
     const enabled=configuration.sources.includes(source.id),tone=!enabled||!h?'neutral':healthLabel==='responded'?'success':healthLabel==='stale'||['cooldown','skipped'].includes(healthLabel)?'warning':'error';
     const displayStatus=(enabled?healthLabel:'disabled').replace(/(^|[ _-])(\w)/g,(_,space,letter)=>(space?' ':'')+letter.toUpperCase());
-    row.append(left,node('span',displayStatus,'status-label '+tone),node('span',h?.durationMs!=null?`${h.durationMs} ms`:'—'),node('span',h?.results!=null?String(h.results):'—'));row.setAttribute('role','row');for(const cell of row.children)cell.setAttribute('role','cell');
+    const previousResult=h?.status!=='ok' ? h?.lastSuccessful || (h?.results!=null ? {results:h.results,checkedAt:h.lastSuccess} : null) : null;
+    if(previousResult){
+      const when=previousResult.checkedAt ? new Date(previousResult.checkedAt).toLocaleString() : 'timestamp unavailable';
+      left.append(node('div',`Previous results: ${previousResult.results ?? '—'} · Last successful check: ${when} · Previous latency: ${previousResult.durationMs!=null?previousResult.durationMs+' ms':'—'}`,'muted'));
+    }
+    row.append(left,node('span',displayStatus,'status-label '+tone),node('span',h?.durationMs!=null?`${h.durationMs} ms`:'—'),node('span',h?.status==='ok'&&h.results!=null?String(h.results):'—'));row.setAttribute('role','row');for(const cell of row.children)cell.setAttribute('role','cell');
     if(h?.retryAt>Date.now())left.append(node('div',`Next attempt after ${new Date(h.retryAt).toLocaleTimeString()}`,'muted'));
     if(h?.code) left.append(node('div',h.code,'muted')); $('#health').append(row);
   }

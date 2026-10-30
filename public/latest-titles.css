@@ -1,0 +1,43 @@
+.latest-showcase{grid-column:1/-1;min-width:0}
+.latest-heading,.latest-controls,.latest-filters,.latest-pages{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.latest-heading{justify-content:space-between;margin-bottom:10px}
+.latest-heading h2{display:flex;align-items:center;gap:10px;font-size:20px;margin:0}
+.latest-heading h2 svg{color:var(--amber,#ffbf3f)}
+#panel-overview .latest-heading p{margin:3px 0 0;font-size:13px}
+.latest-controls select{width:auto;min-height:36px;margin:0;padding:7px 10px;font-size:14px}
+.latest-filters{gap:0;border:1px solid var(--line);border-radius:9px}
+.latest-controls button{font-size:14px;padding:8px 12px;min-height:36px}
+.latest-filters button{border:0;background:transparent}
+.latest-filters [aria-pressed=true]{background:#ffbf3f;color:#111a20}
+.latest-rail{display:flex;align-items:center;gap:8px;min-width:0}
+.latest-track{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;min-width:0;flex:1;padding:3px 2px 8px;scrollbar-width:none;scroll-behavior:smooth}
+.latest-track::-webkit-scrollbar{display:none}
+.latest-arrow{border-radius:50%;width:34px;height:34px;flex:none;padding:0;font-size:25px}
+.latest-media-card{display:flex;flex-direction:column;flex:0 0 200px;min-width:200px;padding:0 0 8px;border:1px solid var(--line);border-radius:11px;background:#101d25;color:var(--text,#e7eef4);text-align:left;scroll-snap-align:start;transition:border-color .15s,transform .15s;overflow-wrap:anywhere}
+.latest-media-card:hover{border-color:#ffbf3f;transform:translateY(-1px);background:#172630}
+.latest-media-card:focus-visible{outline:2px solid #ffbf3f;outline-offset:2px}
+.latest-art{position:relative;width:100%;height:auto;aspect-ratio:2/1;flex:none;background:#1c2b35;border-radius:10px 10px 0 0;display:grid;place-items:center}
+.latest-art img{position:absolute;width:100%;height:100%;object-fit:cover;object-position:center;border-radius:10px 10px 0 0}
+.poster-fallback{font-size:13px;color:#a7b7c7}.poster-loaded .poster-fallback{visibility:hidden}
+.latest-type,.latest-badge{position:absolute;font-size:12px;padding:2px 7px;border-radius:12px;z-index:1}
+.latest-type{left:7px;bottom:6px;background:#0c1726df;border:1px solid #7a8d9d}
+.latest-badge{left:7px;top:6px;background:#204a37;color:#d3f8e4}
+.latest-media-card>strong{max-width:100%;padding:6px 9px 2px;white-space:normal;overflow:hidden;font-size:14px;box-sizing:border-box;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-height:18px;min-height:44px;height:44px}
+.latest-card-meta{margin-top:auto;min-height:18px;display:flex;justify-content:space-between;gap:6px;padding:0 9px;font-size:12px;color:#afc0d0;flex-wrap:wrap}
+.latest-card-meta span:last-child{color:#ffd184}
+#panel-overview .latest-status{font-size:12px;color:#a7b7c7;line-height:1.4;margin:5px 0 0;min-height:17px}
+.latest-dialog{width:min(960px,calc(100vw - 40px));max-height:85dvh;overflow:auto;background:#111f28;color:#e7eef4;border:1px solid #415563;border-radius:14px;padding:24px}
+.latest-dialog::backdrop{background:#040b13bb}.latest-dialog>button:first-child{float:right;margin-left:12px}
+.latest-dialog p{overflow-wrap:anywhere}.latest-history-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;clear:both}
+.latest-pages{justify-content:flex-end;margin-top:16px}.latest-dialog .latest-art{height:140px}
+
+#latest-showcase .latest-media-card>strong{flex:none}
+#latest-showcase .latest-card-meta{flex-wrap:nowrap;font-size:12px}
+#latest-showcase .latest-badge{background:#ffbf3f;color:#151c20}
+#latest-showcase .latest-type{left:auto;right:6px}
+#latest-showcase .latest-track{scroll-padding:2px}
+#latest-showcase .latest-arrow:disabled{opacity:.35}
+@media(max-width:600px){#latest-showcase .latest-controls{width:100%}#latest-showcase .latest-rail{gap:4px}#latest-showcase .latest-arrow{width:28px}}
+@media(prefers-reduced-motion:reduce){#latest-showcase .latest-track{scroll-behavior:auto}#latest-showcase .latest-media-card{transition:none}}
+
+.latest-art img.portrait-art{object-fit:contain}

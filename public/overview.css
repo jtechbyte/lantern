@@ -1,0 +1,53 @@
+/* Overview alone owns this layout. Navigation/header styles are not changed. */
+#panel-overview{min-height:0;align-content:start}
+#panel-overview>.overview-status{position:relative;align-self:stretch}
+.overview-more{display:none}
+.overview-details{width:min(640px,calc(100vw - 32px));max-height:85dvh;overflow:auto;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:24px}
+.overview-details::backdrop{background:#0009}
+.overview-details>button{float:right}
+.overview-details p{white-space:pre-wrap;overflow-wrap:anywhere}
+/* 80px header + 88px actions = 168px reserved. Intrinsic rows, never clipped. */
+@media(min-width:1100px) and (min-height:700px){
+ /* Above the laptop budget, grow only bounded padding/card width with height.
+    Short desktops change these tokens below, not the component declarations. */
+ #panel-overview{--room:clamp(0px,calc(4dvh - 33.6px),10px);--section-gap:12px;--status-pad:calc(12px + var(--room));--row-pad:calc(6px + var(--room));--metric-pad:6px;--metric-line:32px;--heading-size:30px;--heading-line:33px;--status-heading:19px;--status-line:24px;--description-gap:5px;--card-width:clamp(190px,calc(14dvh + 69px),220px);--media-pad:calc(8px + var(--room));grid-template-rows:auto auto auto auto;gap:var(--section-gap) 16px}
+ .dashboard-content:has(#panel-overview:not([hidden])){padding:10px 24px;margin-bottom:88px}
+ #panel-overview .panel-heading h1{font-size:var(--heading-size);line-height:var(--heading-line);margin:0 0 2px}
+ #panel-overview .panel-heading p{font-size:14px;line-height:20px}
+ #panel-overview .metrics{gap:12px}
+ #panel-overview .metrics .card>div{line-height:18px}
+ #panel-overview .metrics .card>div>span{display:block}
+ #panel-overview .metrics .card{min-height:60px;padding:var(--metric-pad) 12px;gap:12px}
+ #panel-overview .metrics strong{font-size:30px;line-height:var(--metric-line)}
+ #panel-overview .metrics span{font-size:13px;line-height:18px}
+ #panel-overview .metric-icon{width:40px;height:42px;min-width:40px}
+ #panel-overview .overview-status{padding:var(--status-pad) max(12px,var(--status-pad));display:block;min-height:0}
+ #panel-overview .overview-status h2{font-size:var(--status-heading);line-height:var(--status-line);margin:0 80px 0 0}
+ #panel-overview .overview-status>p:first-of-type{font-size:13px;line-height:18px;margin:0 0 var(--description-gap)}
+ #panel-overview .overview-more{display:block;position:absolute;right:12px;top:max(8px,var(--status-pad));padding:3px 8px;min-height:28px;font-size:13px}
+ #panel-overview #setup-status{display:block}
+ #panel-overview .setup-item{display:grid;grid-template-columns:20px 90px minmax(0,1fr) auto;gap:8px;padding:var(--row-pad) 0;margin:0;min-height:0;align-items:center}
+ #panel-overview .setup-item>.outline-icon{width:20px;height:20px}
+ #panel-overview .setup-item strong,#panel-overview .status-label{font-size:13px;line-height:20px}
+ #panel-overview .setup-detail small,#panel-overview .setup-card>p:last-of-type,#panel-overview .health-row small,#panel-overview .health-row .muted{display:none}
+ #panel-overview .setup-item>button{grid-column:auto;font-size:13px;line-height:20px;padding:2px 8px;min-height:26px}
+ #panel-overview #health{display:block}
+ #panel-overview .health-head,#panel-overview .health-row{display:grid;grid-template-columns:minmax(0,1.5fr) 100px 56px 44px;gap:8px;padding:var(--row-pad) 0;min-height:0;font-size:13px;line-height:20px;flex:none}
+ #panel-overview .health-head{padding:2px 0;font-size:12px;line-height:18px}
+ #panel-overview .health-row .status-label{font-size:13px}
+ #panel-overview>#latest-showcase{padding:var(--media-pad) max(12px,var(--media-pad))}
+ #latest-showcase .latest-heading{margin-bottom:4px;flex-wrap:nowrap}
+ #latest-showcase .latest-heading h2{font-size:18px;line-height:24px}
+ #latest-showcase .latest-heading p{display:none}
+ #latest-showcase .latest-controls{gap:6px;flex-wrap:nowrap}
+ #latest-showcase .latest-controls button,#latest-showcase .latest-controls select{font-size:13px;min-height:30px;padding:4px 9px}
+ #latest-showcase .latest-track{padding:4px 3px;gap:12px;scroll-padding:3px}
+ #latest-showcase .latest-media-card{flex:0 0 var(--card-width);min-width:var(--card-width);padding-bottom:4px}
+ #latest-showcase .latest-media-card>strong{font-size:13px;line-height:17px;min-height:38px;height:38px;padding:3px 8px 1px}
+ #latest-showcase .latest-card-meta{padding:0 8px;line-height:18px}
+ #latest-showcase .latest-status{margin:2px 0 0;line-height:16px;min-height:16px}
+}
+@media(min-width:1100px) and (min-height:700px) and (max-height:839px){
+ .dashboard-content:has(#panel-overview:not([hidden])){padding-top:6px;padding-bottom:6px}
+ #panel-overview{--section-gap:6px;--status-pad:6px;--row-pad:2px;--metric-pad:2px;--metric-line:28px;--heading-size:28px;--heading-line:30px;--status-heading:18px;--status-line:22px;--description-gap:1px;--card-width:160px;--media-pad:8px}
+}

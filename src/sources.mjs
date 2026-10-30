@@ -46,6 +46,7 @@ export class Sources {
     } catch (error) {
       const status = error.status === 429 ? 'throttled' : error.status === 403 ? 'blocked' : 'error';
       await this.store.health(id, { status, code: error.code || 'PARSER_ERROR', checkedAt: Date.now(), lastSuccess: previous?.lastSuccess || null,
+        lastSuccessful: previous?.status === 'ok' ? { checkedAt: previous.checkedAt, durationMs: previous.durationMs, results: previous.results } : previous?.lastSuccessful || null,
         durationMs: Date.now() - start, retryAt: Date.now() + (status === 'error' ? 60000 : 15 * 60000) });
       if (error.partialRows?.length) return error.partialRows;
       throw error;

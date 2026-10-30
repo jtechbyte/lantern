@@ -32,7 +32,7 @@ test('PostgreSQL data persists after closing and reopening the database engine',
 test('PostgreSQL schema, encrypted settings, CRUD, transactions, pruning and restart',async t=>{
   const store=await embeddedStore(key);t.after(()=>store.close());
   await store.migrateSchema();
-  assert.equal((await store.db.query('SELECT count(*) AS n FROM schema_migrations')).rows[0].n,5);
+  assert.equal((await store.db.query('SELECT count(*) AS n FROM schema_migrations')).rows[0].n,6);
   const token=await store.get('installToken');
   await store.saveSettings({...await store.settings(),name:'PG Lantern',rdToken:'private-fixture'});
   assert.equal((await store.get('settings')).includes('private-fixture'),false);

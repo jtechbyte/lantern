@@ -16,6 +16,8 @@ Settings edits remain in the form while switching sections. **Save configuration
 
 Source health shows the last response, latency, and result count. Responded can mean zero results; enabled is not connected. Untested and stale observations are not live health checks. Blocked/throttled states can include retry timing. The status is not a promise of playback.
 
+Overview also includes **Latest Movies & TV Shows** from indexed movie and episode observations. Filter by type, sort by first indexing or recent release date, and use View all for the complete catalog. Metadata and artwork come from Cinemeta; indexing does not confirm playback availability. See [Latest titles](LATEST_TITLES.md) for caching and timestamp limitations.
+
 ## Appearance
 
 **Branding:** display name (1–60 characters), description (up to 300), and optional HTTPS logo URL. Blank logo uses the bundled Lantern mark. The dashboard retains the product branding; the Stremio manifest uses your saved customization.

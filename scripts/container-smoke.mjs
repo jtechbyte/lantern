@@ -131,6 +131,10 @@ try {
   };
   await checkSaved();
   console.log('PASS native PostgreSQL initialization, non-root image, login, UI save/refresh, redaction and installation identity');
+  if(process.env.VERIFY_BROWSER_ZOOM==='1'){
+    const {verifyBrowserZoom}=await import('./browser-zoom.mjs');
+    await verifyBrowserZoom({base,admin});
+  }
   compose('restart', 'lantern'); await healthy(); await checkSaved();
   compose('up', '-d', '--force-recreate', '--wait', '--wait-timeout', '120', 'lantern'); await healthy(); await checkSaved();
   compose('restart', 'postgres');

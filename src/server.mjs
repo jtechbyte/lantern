@@ -1,3 +1,4 @@
+import { LatestTitles } from './latest-titles.mjs';
 import { databaseSizeReader } from './database-size.mjs';
 import express from 'express';
 import { formatSource, previewSource } from './formatter.mjs';
@@ -21,7 +22,7 @@ const importSchema = z.object({
 }).strict();
 const mediaBody = z.object({ type: z.enum(['movie','series']), id: z.string().max(60), force: z.boolean().optional() }).strict();
 
-export function createApp({ store, engine, rd, adminToken, publicUrl, signingKey, dmm = new DmmImporter(store) }) {
+export function createApp({ store, engine, rd, adminToken, publicUrl, signingKey, dmm = new DmmImporter(store), latest = new LatestTitles(store) }) {
   if (!adminToken || adminToken.length < 32) throw new Error('ADMIN_TOKEN must be at least 32 characters; run npm run setup');
   const app = express(); app.disable('x-powered-by'); app.disable('etag');
   const profiles = new Profiles(store);
@@ -69,6 +70,12 @@ export function createApp({ store, engine, rd, adminToken, publicUrl, signingKey
   app.delete('/api/rd-token', async (req,res) => { await store.saveSettings({ ...(await store.settings()), rdToken: '', provider: 'realdebrid' }); rd.links.clear(); res.json({ ok: true }); });
   app.get('/api/status', async (req,res) => res.json({ ...await store.stats(), activeSearches: engine.inflight.size, activePlayback: rd.active.size }));
   app.get('/api/database-size', async (req,res) => res.json(await readDatabaseSize()));
+  app.get('/api/latest-titles', async (req,res) => {
+    const query=z.object({type:z.enum(['all','movie','series']).default('all'),view:z.enum(['added','released']).default('added'),offset:z.coerce.number().int().min(0).max(1000000).default(0),limit:z.coerce.number().int().min(1).max(48).default(12)}).strict().parse(req.query);
+    const data=await latest.list(query);
+    void latest.warm();
+    res.json(data);
+  });
   app.get('/api/activity', async (req,res) => res.json({events:await store.activityHistory()}));
   app.post('/api/rotate-token', async (req,res) => { await store.rotateToken(); res.json({ installUrl: await installUrl() }); });
   app.post('/api/rd-test', async (req,res) => {

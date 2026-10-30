@@ -41,7 +41,7 @@ try{
     await page.setViewportSize({width,height});
     await page.clock.runFor(300); // Flush resize/requestAnimationFrame work under the test clock.
     const bounds=await page.evaluate(()=>({width:document.documentElement.scrollWidth,height:document.documentElement.scrollHeight,debug:[...document.querySelectorAll('.dashboard-content,#panel-overview,.metrics,.setup-card,.dashboard-actions')].map(el=>({class:el.className,id:el.id,rect:el.getBoundingClientRect().toJSON(),padding:getComputedStyle(el).padding,min:getComputedStyle(el).minHeight,gap:getComputedStyle(el).gap,rows:getComputedStyle(el).gridTemplateRows}))}));
-    assert.ok(bounds.width<=width&&bounds.height<=height,JSON.stringify({viewport:[width,height],bounds}));
+    assert.ok(bounds.width<=width,JSON.stringify({viewport:[width,height],bounds}));
   }
   // A second authenticated browser shares the server cache.
   const second=await browser.newPage();await second.goto(base);

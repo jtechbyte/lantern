@@ -2,6 +2,12 @@
 
 Only changes established by the local source and audit records are listed. There was no Git history or prior public release tag in the reviewed project; internal ZIP revisions are not presented as separate public releases.
 
+## Unreleased
+
+- Add an Overview-only indexed-title carousel with cached Cinemeta metadata, type filters, date sorting, accessible details and View all.
+- Preserve the complete sidebar layout; fit Overview and bottom actions within target desktop viewports using compact status rows and accessible supporting-detail dialogs. Retain document scrolling for smaller or zoomed layouts.
+- Add transactional first-indexed timestamps with explicitly estimated backfill dates.
+
 ## 0.1.2 - live database size
 
 - Fourth Overview card measures the connected PostgreSQL database, including tables and indexes, with decimal units and exact byte details.

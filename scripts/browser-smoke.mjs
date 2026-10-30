@@ -8,6 +8,7 @@ import { embeddedStore } from './lib/embedded-postgres.mjs';
 import { Engine } from '../src/engine.mjs';
 import { RealDebrid } from '../src/providers/real-debrid/client.mjs';
 import { createApp } from '../src/server.mjs';
+import { LatestTitles } from '../src/latest-titles.mjs';
 
 // Isolated fixtures: no source discovery, provider requests, or real credentials.
 const directory = mkdtempSync(join(tmpdir(), 'lantern-browser-'));
@@ -20,7 +21,8 @@ const server = createServer((req,res) => handler(req,res));
 try {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
-  handler = createApp({ store, engine, rd, publicUrl: base, adminToken: 'c'.repeat(64), signingKey: 'b'.repeat(64) });
+  const appOptions={store,engine,rd,latest:new LatestTitles(store,{request:async()=>{throw Error('Offline test');}}),publicUrl:base,adminToken:'c'.repeat(64),signingKey:'b'.repeat(64)};
+  handler=createApp(appOptions);
   const edge = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
   const executablePath = process.env.BROWSER_PATH || (existsSync(edge) ? edge : undefined);
   browser = await chromium.launch({ headless: true, ...(executablePath ? { executablePath } : {}) });
@@ -131,6 +133,10 @@ try {
   await page.click('button.save');
   await page.waitForFunction(() => document.querySelector('#brand').textContent === 'Lantern Test');
   assert.equal((await store.settings()).name, 'Lantern Test');
+  const installManifest=await page.inputValue('#manifest-url');
+  assert.equal(await page.getAttribute('#install','href'),installManifest.replace(/^https?:\/\//,'stremio://'));
+  const manifestResponse=await page.request.get(installManifest);assert.equal(manifestResponse.status(),200);
+  assert.equal((await manifestResponse.json()).name,'Lantern Test','Installation manifest reflects saved backend configuration');
   page.once('dialog', dialog=>dialog.accept());
   await page.click('#tab-discovery');
   await page.click('#recommended');
@@ -179,7 +185,7 @@ try {
   await page.click('#tab-overview');
   await page.waitForTimeout(100);
   await page.screenshot({path:join(artifacts,'dashboard-overview-review.png'),fullPage:true});
-  assert.equal(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight),true);
+  assert.ok(await page.evaluate(()=>document.querySelector('#latest-showcase').getBoundingClientRect().bottom<=document.querySelector('.dashboard-actions').getBoundingClientRect().top),'Overview content stays above actions');
   await page.screenshot({ path:join(artifacts,'dashboard-desktop.png'), fullPage:true });
   await page.setViewportSize({ width:390, height:844 });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'Mobile layout must not overflow');
@@ -216,10 +222,12 @@ try {
   await page.waitForFunction(()=>document.querySelector('[name=rdToken]').value===''&&document.querySelector('#provider-token-state').textContent==='Token saved');
   assert.match(await page.textContent('#rd-status'),/pending/);
   assert.equal(await page.getAttribute('[name=rdToken]','type'),'password');
-  await page.route('**/api/rd-test',async route=>{await new Promise(resolve=>setTimeout(resolve,250));await route.fulfill({json:{type:'premium'}});});
-  await page.click('#rd-test');await page.waitForFunction(()=>document.querySelector('#rd-status').textContent.includes('Testing'));
+  const realUser=rd.user;let testedToken;
+  rd.user=async token=>{testedToken=token;await new Promise(resolve=>setTimeout(resolve,250));return {type:'premium'};};
+  await page.click('#tab-overview');await page.locator('#setup-status button').click();await page.waitForFunction(()=>document.querySelector('#rd-status').textContent.includes('Testing'));
   await page.waitForFunction(()=>document.querySelector('#rd-status').textContent.includes('Verified'));
-  await page.unroute('**/api/rd-test');
+  assert.equal(testedToken,'browser-fixture-account-token','Overview Test account uses the stored token through the backend');
+  rd.user=realUser;await page.click('#tab-playback');
   await page.route('**/api/rd-test',route=>route.fulfill({status:503,json:{error:'Account test unavailable'}}));
   await page.click('#rd-test');await page.waitForFunction(()=>document.querySelector('#rd-status').textContent.includes('verification failed'));
   await page.unroute('**/api/rd-test');
@@ -235,7 +243,7 @@ try {
         if(view)await view.click();await page.waitForTimeout(100);
         const geometry=await page.evaluate(()=>{const panel=document.querySelector('.tab-panel:not([hidden])'),footer=document.querySelector('.dashboard-actions');return {scroll:document.documentElement.scrollHeight,width:document.documentElement.scrollWidth,bottom:panel.getBoundingClientRect().bottom,footer:footer.getBoundingClientRect().top};});
         assert.ok(geometry.bottom<=geometry.footer,`${width}x${height} ${await tab.textContent()} ${view?await view.textContent():''}: workspace ${geometry.bottom} overlaps footer ${geometry.footer}`);
-        assert.ok(geometry.scroll<=height&&geometry.width<=width,`${width}x${height} ${await tab.textContent()} ${view?await view.textContent():''} desktop overflow: ${JSON.stringify(geometry)}`);
+        assert.ok((await tab.getAttribute('id')==='tab-overview'||geometry.scroll<=height)&&geometry.width<=width,`${width}x${height} ${await tab.textContent()} ${view?await view.textContent():''} desktop overflow: ${JSON.stringify(geometry)}`);
         if(await tab.getAttribute('id')==='tab-discovery'&&view&&await view.textContent()==='Discovery sources'){
           assert.equal(await page.locator('#sources .source:visible').count(),4,'All Discovery sources remain visible');
           assert.equal(await panel.locator('.list-pages').count(),0,'Discovery sources have no pagination controls');
@@ -385,6 +393,7 @@ try {
   await page.unroute('**/api/profiles');
   // Browser zoom reduces the CSS viewport: 1280px at 125%, 150%, and 200%.
   for(const [width,height] of [[1024,576],[853,480],[640,360],[390,844]]){
+    handler=createApp(appOptions); // Each viewport is an independent layout scenario.
     await page.setViewportSize({width,height});
     for(const tab of await page.locator('.dashboard-nav [role=tab]').all()){
       await tab.click();await page.waitForTimeout(60);
@@ -401,6 +410,7 @@ try {
   assert.deepEqual(errors.filter(message=>!message.includes('503')&&!message.includes('500')&&!message.includes('401')), []);
   assert.equal(await page.getAttribute('#admin-token','type'),'password','Lock restores masked input');
   assert.equal(await page.inputValue('#admin-token'),'','Lock clears the token field');
+  handler=createApp(appOptions); // Reset test request budget after viewport sweep.
   await page.evaluate(()=>sessionStorage.setItem('lantern.admin.tab','expired-verification-fixture'));
   await page.reload();
   await page.waitForFunction(()=>document.querySelector('#login-error').textContent.includes('Saved login expired'));

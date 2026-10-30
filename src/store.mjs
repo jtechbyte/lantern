@@ -31,6 +31,28 @@ const migrations = [[
 ], [
   'CREATE TABLE dmm_lists (path TEXT PRIMARY KEY, sha TEXT NOT NULL, attempted BIGINT NOT NULL DEFAULT 0, next_attempt BIGINT NOT NULL DEFAULT 0)',
   'CREATE INDEX dmm_lists_queue ON dmm_lists(next_attempt,attempted)',
+], [
+  `CREATE TABLE indexed_titles (
+    key TEXT PRIMARY KEY, first_seen BIGINT NOT NULL, last_seen BIGINT NOT NULL,
+    estimated BOOLEAN NOT NULL DEFAULT false,
+    metadata JSONB, metadata_at BIGINT, next_metadata_at BIGINT NOT NULL DEFAULT 0
+  )`,
+  "CREATE INDEX releases_title_key ON releases ((split_part(media,'/',1) || '/' || split_part(split_part(media,'/',2),':',1)))",
+  `INSERT INTO indexed_titles(key,first_seen,last_seen,estimated)
+    SELECT split_part(media,'/',1) || '/' || split_part(split_part(media,'/',2),':',1), MIN(updated),MAX(updated),true
+    FROM releases WHERE media ~ '^(movie/tt[0-9]{7,10}|series/tt[0-9]{7,10}:[0-9]+:[0-9]+)$' GROUP BY 1`,
+  `CREATE FUNCTION track_indexed_title() RETURNS trigger LANGUAGE plpgsql AS $$
+    BEGIN
+      IF NEW.media ~ '^(movie/tt[0-9]{7,10}|series/tt[0-9]{7,10}:[0-9]+:[0-9]+)$' THEN
+        INSERT INTO indexed_titles(key,first_seen,last_seen)
+        VALUES(split_part(NEW.media,'/',1) || '/' || split_part(split_part(NEW.media,'/',2),':',1),NEW.updated,NEW.updated)
+        ON CONFLICT(key) DO UPDATE SET last_seen=GREATEST(indexed_titles.last_seen,excluded.last_seen);
+      END IF;
+      RETURN NEW;
+    END $$`,
+  'CREATE TRIGGER releases_track_title AFTER INSERT OR UPDATE ON releases FOR EACH ROW EXECUTE FUNCTION track_indexed_title()',
+  'CREATE INDEX indexed_titles_added ON indexed_titles(first_seen DESC,key)',
+  'CREATE INDEX indexed_titles_metadata_due ON indexed_titles(next_metadata_at)',
 ]];
 
 export class Store {

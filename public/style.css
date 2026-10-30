@@ -120,40 +120,6 @@ body:has(#login:not([hidden])){background:radial-gradient(ellipse 560px 410px at
 @media(min-width:1100px) and (min-height:700px){
  .dashboard-actions{min-height:88px;padding:12px 30px 30px;align-items:center}.playback-note{bottom:8px}
  .dashboard-content{margin-bottom:88px}
- #panel-overview{min-height:calc(100dvh - 212px);grid-template-rows:auto auto minmax(min-content,1fr)}
- #panel-overview>.card{display:flex;flex-direction:column}
- #setup-status{display:grid;grid-template-rows:repeat(4,minmax(min-content,1fr));flex:1}
- #panel-overview .setup-item{grid-template-columns:24px 96px minmax(0,1fr) auto;gap:4px 12px;min-height:0;padding:10px 0}
- #panel-overview .setup-item>.outline-icon{grid-column:1;grid-row:1/3}
- #panel-overview .setup-item>strong{grid-column:2;grid-row:1}
- #panel-overview .setup-detail{display:contents}
- #panel-overview .setup-detail>.status-label{grid-column:3;grid-row:1}
- #panel-overview .setup-detail>small{grid-column:2/4;grid-row:2;margin:0}
- #panel-overview .setup-item>button{grid-column:4;grid-row:1/3;font-size:14px;padding:8px 12px}
- #panel-overview .setup-card>p:last-child{padding-top:10px;margin-top:0;font-size:13px}
- #health{flex:1;display:flex;flex-direction:column}
- #health .health-row{flex:1}
- #panel-overview .health-head,#panel-overview .health-row{grid-template-columns:minmax(0,1.6fr) minmax(95px,1fr) 64px 54px;padding-left:0;padding-right:0;gap:10px}
-}
-@media(min-width:1100px) and (min-height:700px) and (max-height:800px){
- .dashboard-content:has(#panel-overview:not([hidden])){padding-top:16px;padding-bottom:12px}
- #panel-overview{min-height:calc(100dvh - 196px);gap:14px}
- #panel-overview .metrics .card{min-height:88px;padding-top:12px;padding-bottom:12px}
- #panel-overview>.card{padding:16px}
- #panel-overview>.card>p:first-of-type{margin:4px 0 10px}
- #panel-overview .setup-item{padding:6px 0;gap:2px 10px;grid-template-columns:24px 86px minmax(0,1fr) auto}
- #panel-overview .health-row{padding-top:8px;padding-bottom:8px}
- #panel-overview .health-head{padding-top:8px;padding-bottom:8px}
-}
-@media(min-width:1100px) and (min-height:700px) and (max-height:800px){
- #panel-overview .health-row{padding-top:4px;padding-bottom:4px}
- #panel-overview>.card>p:first-of-type{margin-top:2px;margin-bottom:8px}
-}
-@media(min-width:1100px) and (min-height:700px) and (max-height:740px){
- .dashboard-content:has(#panel-overview:not([hidden])){padding-top:12px;padding-bottom:8px}
- #panel-overview{gap:10px;min-height:calc(100dvh - 188px)}
- #panel-overview .metrics .card{min-height:78px;padding-top:6px;padding-bottom:6px}
- #panel-overview>.card{padding-top:12px;padding-bottom:12px}
 }
 /* Activity uses its own content-aware table; the dashboard shell is unchanged. */
 #panel-activity #events{display:block;min-width:0}
@@ -239,12 +205,3 @@ body:has(#login:not([hidden])){background:radial-gradient(ellipse 560px 410px at
 @media(max-width:600px){#panel-overview .metrics{grid-template-columns:1fr}}
 
 .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-@media(min-width:1100px) and (min-height:700px){#panel-overview .metrics .card{padding-top:9px;padding-bottom:9px}}
-@media(min-width:1100px) and (min-height:700px) and (max-height:760px){
- .dashboard-content:has(#panel-overview:not([hidden])){padding-bottom:0}
- #panel-overview{gap:6px}
- #panel-overview .metrics .card{padding-top:5px;padding-bottom:5px}
- #panel-overview .metrics strong{line-height:1.05}
- #panel-overview .metrics span{line-height:1.4}
- #panel-overview>.card{padding-top:6px;padding-bottom:6px}
-}
