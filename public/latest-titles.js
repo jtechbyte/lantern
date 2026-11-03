@@ -27,6 +27,7 @@ function latestTitleIsNew(item,now=Date.now()){const age=now-Number(item.firstSe
   function motion(){return matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth';}
   function scrollCards(direction){const step=(track.firstElementChild?.getBoundingClientRect().width||track.clientWidth)+12;track.scrollBy({left:direction*Math.max(1,Math.floor((track.clientWidth+12)/step))*step,behavior:motion()});}
   function arrows(){const art=track.querySelector('.latest-art');if(art){const r=art.getBoundingClientRect();rail.style.setProperty('--art-center',(r.top+r.height/2-rail.getBoundingClientRect().top)+'px');}left.disabled=track.scrollLeft<2;right.disabled=track.scrollLeft+track.clientWidth>=track.scrollWidth-2;}
+  track.addEventListener('focusin',event=>{const card=event.target.closest('.latest-media-card');if(!card)return;const c=card.getBoundingClientRect(),r=track.getBoundingClientRect();if(c.left<r.left||c.right>r.right)card.scrollIntoView({block:'nearest',inline:'start',behavior:'instant'});arrows();});
   track.addEventListener('scroll',arrows,{passive:true});window.addEventListener('resize',arrows);
   function openDetails(item){
     const m=item.metadata,close=button('Close details',()=>details.close());details.replaceChildren(close,el('h2',m?.title||'Title unavailable'));
@@ -54,10 +55,17 @@ function latestTitleIsNew(item,now=Date.now()){const age=now-Number(item.firstSe
       if(loading||loaded||!visible()||!b.isConnected)return;
       const remaining=urls.filter(url=>(imageFailures.get(url)?.retryAt||0)<=Date.now());
       function attempt(){
-        const url=remaining.shift();if(!url){loading=false;fallback.textContent=urls.length?'Artwork unavailable':m?'Artwork unavailable':metadataMessage(item);return;}
+        const url=remaining.shift();if(!url){loading=false;fallback.textContent=urls.length||m?'Artwork unavailable':metadataMessage(item);return;}
         loading=true;fallback.textContent='Loading artwork\u2026';
         const image=el('img');if(url===m.poster&&url!==m.background)image.className='portrait-art';image.alt='';image.decoding='async';image.referrerPolicy='no-referrer';
-        image.onload=()=>{loading=false;loaded=true;imageFailures.delete(url);art.classList.add('poster-loaded');};
+        image.onload=()=>{
+          loading=false;loaded=true;imageFailures.delete(url);
+          if(image.classList.contains('portrait-art')&&image.naturalHeight>image.naturalWidth){
+            const backdrop=el('div',null,'latest-poster-backdrop'),blur=el('span');backdrop.setAttribute('aria-hidden','true');
+            blur.style.backgroundImage='url('+JSON.stringify(image.currentSrc)+')';backdrop.append(blur);art.insertBefore(backdrop,image);
+          }
+          art.classList.add('poster-loaded');
+        };
         image.onerror=()=>{image.remove();const attempts=Math.min(5,(imageFailures.get(url)?.attempts||0)+1);if(imageFailures.size>=256)imageFailures.delete(imageFailures.keys().next().value);imageFailures.set(url,{attempts,retryAt:Date.now()+Math.min(900000,60000*2**(attempts-1))});if(b.isConnected&&visible())attempt();else loading=false;};
         image.src=url;art.append(image);
       }

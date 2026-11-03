@@ -12,10 +12,10 @@ const edge='C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const browser=await chromium.launch({headless:true,...(existsSync(edge)?{executablePath:edge}:{})});
 try{
  const page=await browser.newPage({viewport:{width:1366,height:768},reducedMotion:'reduce'}),errors=[];page.on('pageerror',e=>errors.push(e.message));
- const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aOCkAAAAASUVORK5CYII=','base64');
+ const png=Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="20" height="30"><rect width="20" height="30" fill="orange"/></svg>');
  let backgroundCalls=0,posterCalls=0,fail=true,releaseImage;
- await page.route('https://fixture.invalid/background',async route=>{backgroundCalls++;if(fail)await route.fulfill({status:503});else await route.fulfill({contentType:'image/png',body:png});});
- await page.route('https://fixture.invalid/poster',async route=>{posterCalls++;await new Promise(r=>releaseImage=r);await route.fulfill({contentType:'image/png',body:png});});
+ await page.route('https://fixture.invalid/background',async route=>{backgroundCalls++;if(fail)await route.fulfill({status:503});else await route.fulfill({contentType:'image/svg+xml',body:png});});
+ await page.route('https://fixture.invalid/poster',async route=>{posterCalls++;await new Promise(r=>releaseImage=r);await route.fulfill({contentType:'image/svg+xml',body:png});});
  const base={key:'movie/tt1234567',type:'movie',imdb:'tt1234567',media:'movie/tt1234567',firstSeen:Date.now(),metadataAt:Date.now(),metadataState:'fresh',metadataFetchState:'fresh',metadata:{title:'Same-title fallback fixture',year:'2026',imdbRating:8,background:'https://fixture.invalid/background',poster:'https://fixture.invalid/poster'}};
  let items=[base,{...base,key:'movie/tt1234568',imdb:'tt1234568',metadata:null,metadataState:'failed',metadataFetchState:'failed'}, {...base,key:'movie/tt1234569',imdb:'tt1234569',metadata:null,metadataState:'unavailable',metadataFetchState:'unavailable'}, {...base,key:'movie/tt1234570',imdb:'tt1234570',metadata:null,metadataState:'pending',metadataFetchState:'pending'}];
  await page.route('**/api/latest-titles?*',route=>route.fulfill({json:{items,total:items.length,offset:0,limit:12}}));
@@ -27,6 +27,9 @@ try{
  assert.equal(await page.locator('.latest-type').count(),0);
  releaseImage();await page.waitForFunction(()=>document.querySelector('.latest-art').classList.contains('poster-loaded'));
  assert.equal(await first.locator('img').getAttribute('class'),'portrait-art');
+ assert.equal(await first.locator('.latest-poster-backdrop').count(),1);
+ assert.equal(await first.locator('.latest-poster-backdrop>span').evaluate(e=>e.style.backgroundImage),'url("https://fixture.invalid/poster")');
+ assert.equal(await first.locator('img').evaluate(e=>getComputedStyle(e).objectFit),'contain');
  // Poll with identical data must not reload either artwork URL.
  await page.clock.install();await page.clock.fastForward(30001);await page.waitForTimeout(50);assert.equal(backgroundCalls,1);assert.equal(posterCalls,1);
  // Failed artwork retries only after its per-URL backoff; the next poll recovers it.

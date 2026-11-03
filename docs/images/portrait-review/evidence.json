@@ -1,0 +1,183 @@
+{
+  "checkedAt": "2026-11-03T02:11:09.402Z",
+  "titles": [
+    {
+      "id": "tt39773403",
+      "metadataUrl": "https://v3-cinemeta.strem.io/meta/movie/tt39773403.json",
+      "status": 307,
+      "redirect": "https://cinemeta-live.strem.io/meta/movie/tt39773403.json",
+      "endpointItem": {
+        "key": "movie/tt39773403",
+        "type": "movie",
+        "imdb": "tt39773403",
+        "media": "movie/tt39773403",
+        "firstSeen": 1793671869404,
+        "lastSeen": 1793671869404,
+        "estimated": false,
+        "metadata": {
+          "year": "2026",
+          "title": "The Canvas",
+          "poster": "https://live.metahub.space/poster/small/tt39773403/img",
+          "provider": "Cinemeta",
+          "background": "https://live.metahub.space/background/medium/tt39773403/img",
+          "imdbRating": null,
+          "description": "In an isolated house, a father and his son discover a painting that seems disturbingly alive. When their darkest nightmares begin bleeding into reality, a sinister presence emerges from the canvas, feeding on buried trauma and forgotten memories.",
+          "releaseDate": null
+        },
+        "metadataAt": 1793671869491,
+        "metadataCheckedAt": 1793671869491,
+        "metadataRetryAt": 1794276669491,
+        "metadataFetchState": "fresh",
+        "metadataState": "fresh"
+      },
+      "images": [
+        {
+          "field": "background",
+          "url": "https://live.metahub.space/background/medium/tt39773403/img",
+          "status": 404,
+          "contentType": "text/plain; charset=utf-8"
+        },
+        {
+          "field": "poster",
+          "url": "https://live.metahub.space/poster/small/tt39773403/img",
+          "status": 200,
+          "contentType": "image/jpeg"
+        }
+      ],
+      "rendered": {
+        "src": "https://live.metahub.space/poster/small/tt39773403/img",
+        "naturalWidth": 300,
+        "naturalHeight": 431,
+        "objectFit": "contain",
+        "backdrop": "url(\"https://live.metahub.space/poster/small/tt39773403/img\")",
+        "rating": "—"
+      }
+    },
+    {
+      "id": "tt10377864",
+      "metadataUrl": "https://v3-cinemeta.strem.io/meta/movie/tt10377864.json",
+      "status": 307,
+      "redirect": "https://cinemeta-live.strem.io/meta/movie/tt10377864.json",
+      "endpointItem": {
+        "key": "movie/tt10377864",
+        "type": "movie",
+        "imdb": "tt10377864",
+        "media": "movie/tt10377864",
+        "firstSeen": 1793671869411,
+        "lastSeen": 1793671869411,
+        "estimated": false,
+        "metadata": {
+          "year": "2026",
+          "title": "Beware Boiúna",
+          "poster": "https://live.metahub.space/poster/small/tt10377864/img",
+          "provider": "Cinemeta",
+          "background": "https://live.metahub.space/background/medium/tt10377864/img",
+          "imdbRating": 6.1,
+          "description": "Deep in the Amazon, a medical mission spirals into a fight for survival when Boiúna, a colossal ancient predator, awakens to reclaim her domain. In the jungle where nature holds absolute power, she decides who lives and who dies.",
+          "releaseDate": null
+        },
+        "metadataAt": 1793671869485,
+        "metadataCheckedAt": 1793671869485,
+        "metadataRetryAt": 1794276669485,
+        "metadataFetchState": "fresh",
+        "metadataState": "fresh"
+      },
+      "images": [
+        {
+          "field": "background",
+          "url": "https://live.metahub.space/background/medium/tt10377864/img",
+          "status": 200,
+          "contentType": "image/jpeg"
+        },
+        {
+          "field": "poster",
+          "url": "https://live.metahub.space/poster/small/tt10377864/img",
+          "status": 200,
+          "contentType": "image/jpeg"
+        }
+      ],
+      "rendered": {
+        "src": "https://live.metahub.space/background/medium/tt10377864/img",
+        "naturalWidth": 1280,
+        "naturalHeight": 720,
+        "objectFit": "cover",
+        "backdrop": null,
+        "rating": "★ 6.1 IMDb"
+      }
+    }
+  ],
+  "viewports": [
+    {
+      "width": 1280,
+      "height": 720,
+      "cards": [
+        {
+          "width": 160,
+          "height": 141,
+          "artHeight": 79
+        },
+        {
+          "width": 160,
+          "height": 141,
+          "artHeight": 79
+        }
+      ],
+      "sidebarMatchesBaseline": true,
+      "noVerticalScroll": true
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "cards": [
+        {
+          "width": 160,
+          "height": 141,
+          "artHeight": 79
+        },
+        {
+          "width": 160,
+          "height": 141,
+          "artHeight": 79
+        }
+      ],
+      "sidebarMatchesBaseline": true,
+      "noVerticalScroll": true
+    },
+    {
+      "width": 1536,
+      "height": 864,
+      "cards": [
+        {
+          "width": 190,
+          "height": 156,
+          "artHeight": 94
+        },
+        {
+          "width": 190,
+          "height": 156,
+          "artHeight": 94
+        }
+      ],
+      "sidebarMatchesBaseline": true,
+      "noVerticalScroll": true
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "cards": [
+        {
+          "width": 220,
+          "height": 171,
+          "artHeight": 109
+        },
+        {
+          "width": 220,
+          "height": 171,
+          "artHeight": 109
+        }
+      ],
+      "sidebarMatchesBaseline": true,
+      "noVerticalScroll": true
+    }
+  ]
+}

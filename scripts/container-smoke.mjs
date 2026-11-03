@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, copyFileSync, writeFileSync, readFileSync, rmSync, mkdirSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, createHash } from 'node:crypto';
 import { chromium } from 'playwright';
 
 const image = process.argv[2];
@@ -62,6 +62,12 @@ try {
   assert.match(config.Labels['org.opencontainers.image.revision'], /^[a-f0-9]{40}$/);
   assert.ok(config.Healthcheck);
   docker('run', '--rm', '--entrypoint', 'node', image, '-e', "const fs=require('fs'),assert=require('assert');assert.notEqual(process.getuid(),0);for(const f of ['.env','test','.git','artifacts','scripts/browser-smoke.mjs','node_modules/playwright'])assert.ok(!fs.existsSync('/app/'+f),f);for(const f of ['src/main.mjs','scripts/migrate-sqlite.mjs','scripts/doctor.mjs','scripts/check-deployment.mjs','LICENSE'])assert.ok(fs.existsSync('/app/'+f),f);require('pg');");
+  for(const file of ['public/latest-titles.js','public/latest-titles.css']){
+    const expected=createHash('sha256').update(readFileSync(file)).digest('hex');
+    const actual=docker('run','--rm','--entrypoint','node',image,'-e',"console.log(require('crypto').createHash('sha256').update(require('fs').readFileSync("+JSON.stringify('/app/'+file)+")).digest('hex'))").trim();
+    assert.equal(actual,expected,'Production image contains final frontend: '+file);
+  }
+  console.log('PASS production image frontend JS/CSS hashes match checked-out revision');
   compose('up', '-d', '--wait', '--wait-timeout', '120');
   await healthy();
   if (documentedSetup) {
@@ -135,10 +141,27 @@ try {
     const {verifyBrowserZoom}=await import('./browser-zoom.mjs');
     await verifyBrowserZoom({base,admin});
   }
-  compose('restart', 'lantern'); await healthy(); await checkSaved();
-  compose('up', '-d', '--force-recreate', '--wait', '--wait-timeout', '120', 'lantern'); await healthy(); await checkSaved();
+  // Seed only this disposable database; future deadlines prevent external lookups.
+  const cachedAt=Date.now(),retryAt=cachedAt+86400000;
+  for(const [index,state] of ['fresh','failed','stale'].entries()){
+    const key='movie/tt000001'+index;
+    const metadata={...(state==='failed'?{}:{title:'Persistent cache fixture '+index,year:'2026',poster:'https://example.invalid/poster.jpg',provider:'Cinemeta'}),_lookup:{state:state==='fresh'?'fresh':'failed',attempts:state==='fresh'?0:2,checkedAt:cachedAt}};
+    sql(`INSERT INTO releases VALUES('cache-${index}','${key}','manual','{}',${cachedAt}); UPDATE indexed_titles SET metadata='${JSON.stringify(metadata)}'::jsonb,metadata_at=${state==='failed'?'NULL':cachedAt},next_metadata_at=${retryAt} WHERE key='${key}'`);
+  }
+  const cacheSnapshot=sql("SELECT json_agg(t ORDER BY key) FROM (SELECT key,metadata,metadata_at,next_metadata_at FROM indexed_titles WHERE key LIKE 'movie/tt000001%') t");
+  const checkMetadata=async()=>{
+    assert.equal(sql("SELECT json_agg(t ORDER BY key) FROM (SELECT key,metadata,metadata_at,next_metadata_at FROM indexed_titles WHERE key LIKE 'movie/tt000001%') t"),cacheSnapshot,'Persistent metadata, attempts and deadlines unchanged');
+    const items=(await api('latest-titles')).items;
+    for(const [index,state] of ['fresh','failed','stale'].entries()){
+      const item=items.find(i=>i.key==='movie/tt000001'+index);assert.ok(item);assert.equal(item.metadataState,state);assert.equal(item.metadataRetryAt,retryAt);assert.equal(item.metadataAt,state==='failed'?null:cachedAt);
+    }
+  };
+  await checkMetadata();
+  compose('restart', 'lantern'); await healthy(); await checkSaved(); await checkMetadata();
+  compose('up', '-d', '--force-recreate', '--wait', '--wait-timeout', '120', 'lantern'); await healthy(); await checkSaved(); await checkMetadata();
   compose('restart', 'postgres');
-  compose('up', '-d', '--wait', '--wait-timeout', '120'); await healthy(); await checkSaved();
+  compose('up', '-d', '--wait', '--wait-timeout', '120'); await healthy(); await checkSaved(); await checkMetadata();
+  console.log('PASS metadata JSON, original success timestamps, retry attempts and deadlines survive application restart/recreation and PostgreSQL restart; endpoint retains fresh/failed/stale states');
   console.log('PASS container restart, recreation and PostgreSQL restart preserve saved settings and credentials');
   assert.match(compose('exec', '-T', 'lantern', 'node', 'scripts/check-deployment.mjs', 'http://127.0.0.1:7001'), /All deployment checks passed/);
   assert.match(compose('logs', '--no-color', 'lantern'), /Lantern listening on port 7001/);
