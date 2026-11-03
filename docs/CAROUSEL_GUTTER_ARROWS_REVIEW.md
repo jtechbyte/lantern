@@ -32,3 +32,13 @@ Visually inspected at 100% viewport size. Live captures use isolated database re
 At 1920 the 12-card main catalog has two groups; middle and end are the same group. Full hover/selected evidence remains in artifacts/whole-card-groups and CI artifacts.
 
 Native Stremio handoff, real provider-account verification and movie/episode playback remain Not tested - unverified. APIs, authentication, indexing, metadata retrieval, saved settings and production data were not changed.
+
+## Frozen-design cleanup review
+
+Final application revision: 461111812a0a9d677769c1cb7168e4c274a61574. Removed only the obsolete flex:none declaration on absolutely positioned carousel arrows; it no longer participates in flex layout. No visual or navigation behavior changed. The artwork-only offset and temporary debugging were already absent. Retained track padding, rail gap and hover filter suppression because they are still used by sizing and inherited-style handling. No unrelated cleanup.
+
+Updated LATEST_TITLES.md with actual keyboard/filter/history behavior and the distinction between this pending review branch and published 0.1.5. Reviewed README, setup output, installation, operations, .env.example, Dockerfile and production Compose: docker-compose.yml is the pull-based deployment, docker-compose.build.yml is the source build, and published image references remain 0.1.5. Existing service/project/volume identity, read-only legacy volume, internal PostgreSQL, localhost binding and optional HTTPS are unchanged. Historical Compose filenames remain explicitly historical. All 69 relative links in the reviewed documentation resolve.
+
+Post-cleanup node scripts/latest-titles-browser.mjs passed (all four desktop viewports plus responsive fallback, group navigation, filter/resize alignment, focus, dialogs and error recovery; no unexpected console errors). [Production verification 41651052296](https://github.com/jtechbyte/lantern/actions/runs/41651052296) passed on native AMD64 and ARM64 at the final application revision: 131 tests per architecture, browser suite, production build, default/HTTPS Compose validation, isolated PostgreSQL login/settings persistence/recreation, backup/restore, local-CA HTTPS and actual 125%/150%/200% browser zoom. Previously inspected screenshots remain representative: the removed flex declaration had no computed-layout effect.
+
+Native Stremio installation/handoff, live provider-account verification, movie playback and episode playback remain **Not tested - unverified**. Public DNS/ACME and the user's firewall are also unverified. Review branch only: no merge, tag, image publication, release or running-installation changes.
