@@ -33,7 +33,7 @@ function latestTitleIsNew(item,now=Date.now()){const age=now-Number(item.firstSe
     track.scrollTo({left:start*pitch,behavior});arrows();
   }
   function alignCards(){
-    const first=track.firstElementChild;if(!first||!rail.getBoundingClientRect().width)return;
+    const first=track.firstElementChild;if(!first||!rail.getBoundingClientRect().width){arrows();return;}
     const railStyle=getComputedStyle(rail),style=getComputedStyle(track),gap=parseFloat(style.columnGap)||0;
     const padding=parseFloat(style.paddingLeft)+parseFloat(style.paddingRight);
     // Reserve both arrow buttons/gaps and track padding before counting whole cards.
