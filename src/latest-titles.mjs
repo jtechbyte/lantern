@@ -17,27 +17,40 @@ export function normalizeCatalogMetadata(meta, key) {
 }
 
 export class LatestTitles {
-  constructor(store, { request=readJson, now=Date.now }={}) { this.db=store.db; this.request=request; this.now=now; this.pending=null; this.nextWarm=0; this.cache=new Map(); }
-  warm() {
+  constructor(store, { request=readJson, now=Date.now }={}) { this.db=store.db; this.request=request; this.now=now; this.pending=null; this.nextWarm=0; this.cache=new Map(); this.loading=new Set(); }
+  warm(keys=[]) {
     if (this.pending) return this.pending;
     if (this.now()<this.nextWarm) return Promise.resolve();
     this.nextWarm=this.now()+30000;
-    this.pending=this.enrich().catch(()=>{}).finally(()=>{this.pending=null;this.cache.clear();});
+    this.pending=this.enrich(keys).catch(()=>{}).finally(()=>{this.pending=null;this.cache.clear();});
     return this.pending;
   }
-  async enrich() {
-    const rows=(await this.db.query(`SELECT t.key FROM indexed_titles t WHERE next_metadata_at<=$1 AND ${present} ORDER BY next_metadata_at,first_seen DESC LIMIT 4`,[this.now()])).rows;
+  async enrich(keys=[]) {
+    const rows=(await this.db.query(`SELECT t.* FROM indexed_titles t WHERE (next_metadata_at<=$1 OR (metadata IS NOT NULL AND NOT (metadata ? '_lookup') AND (metadata->>'title' IS NULL OR (metadata->>'poster' IS NULL AND metadata->>'background' IS NULL)))) AND ${present} ORDER BY (key=ANY($2::text[])) DESC,next_metadata_at,first_seen DESC LIMIT 4`,[this.now(),keys])).rows;
     // Two network requests at a time; each is bounded by the shared network helper.
     for(let i=0;i<rows.length;i+=2) await Promise.all(rows.slice(i,i+2).map(async row=>{
+      this.loading.add(row.key);
+      const attempts=Math.min(12,Number(row.metadata?._lookup?.attempts||0)+1);
+      const checkedAt=this.now();
+      let metadata=row.metadata||{},state,delay;
       try {
         const [type,id]=row.key.split('/');
-        const data=await this.request(`https://v3-cinemeta.strem.io/meta/${type}/${id}.json`,{timeout:5000,maxBytes:2097152});
-        const metadata=normalizeCatalogMetadata(data.meta,row.key);
-        await this.db.query('UPDATE indexed_titles SET metadata=$2,metadata_at=$3,next_metadata_at=$4 WHERE key=$1',[row.key,JSON.stringify(metadata),this.now(),this.now()+7*86400000]);
-      } catch {
-        // Keep previous metadata; its age is returned explicitly to the UI.
-        await this.db.query('UPDATE indexed_titles SET next_metadata_at=$2 WHERE key=$1',[row.key,this.now()+900000]);
+        const data=await this.request(`https://v3-cinemeta.strem.io/meta/${type}/${id}.json`,{timeout:5000,maxBytes:2097152,allowedRedirect:`https://cinemeta-live.strem.io/meta/${type}/${id}.json`});
+        if(!data?.meta){state='unavailable';delay=86400000;}
+        else {
+          metadata=normalizeCatalogMetadata(data.meta,row.key);
+          state=metadata.poster||metadata.background?'fresh':'incomplete';
+          delay=state==='fresh'?7*86400000:Math.min(6*3600000,900000*2**(attempts-1));
+        }
+      } catch(error) {
+        state=error.status===404?'unavailable':'failed';
+        delay=state==='unavailable'?86400000:Math.min(900000,30000*2**(attempts-1));
       }
+      metadata={...metadata,_lookup:{state,attempts:state==='fresh'?0:attempts,checkedAt}};
+      try {
+        await this.db.query('UPDATE indexed_titles SET metadata=$2,metadata_at=$3,next_metadata_at=$4 WHERE key=$1',
+          [row.key,JSON.stringify(metadata),['fresh','incomplete'].includes(state)?checkedAt:row.metadata_at,checkedAt+delay]);
+      } finally {this.loading.delete(row.key);}
     }));
   }
   async list({type='all',view='added',offset=0,limit=12}={}) {
@@ -59,8 +72,11 @@ export class LatestTitles {
     return {total:Number(counts.total),offset,limit,view,type,updatedAt:new Date(this.now()).toISOString(),items:rows.map(row=>({
       key:row.key,type:row.key.split('/')[0],imdb:row.key.split('/')[1],media:row.media,
       firstSeen:Number(row.first_seen),lastSeen:Number(row.last_seen),estimated:row.estimated,
-      metadata:row.metadata,metadataAt:row.metadata_at?Number(row.metadata_at):null,
-      metadataState:!row.metadata?'unavailable':this.now()-Number(row.metadata_at)>=7*86400000?'stale':'fresh'
+      metadata:row.metadata?.title?Object.fromEntries(Object.entries(row.metadata).filter(([key])=>key!=='_lookup')):null,
+      metadataAt:row.metadata_at?Number(row.metadata_at):null,
+      metadataCheckedAt:row.metadata?._lookup?.checkedAt||null,metadataRetryAt:Number(row.next_metadata_at)||null,
+      metadataFetchState:this.loading.has(row.key)?'loading':row.metadata?._lookup?.state||(row.metadata?.title?'fresh':'pending'),
+      metadataState:row.metadata?.title?(this.now()-Number(row.metadata_at)>=7*86400000||['failed','unavailable'].includes(row.metadata?._lookup?.state)?'stale':row.metadata?._lookup?.state||'fresh'):(this.loading.has(row.key)?'loading':row.metadata?._lookup?.state||'pending')
     }))};
   }
 }

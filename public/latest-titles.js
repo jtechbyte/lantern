@@ -19,33 +19,56 @@ function latestTitleIsNew(item,now=Date.now()){const age=now-Number(item.firstSe
   const details=el('dialog',null,'latest-dialog');details.setAttribute('aria-label','Indexed title details');
   const all=button('View all',()=>{offset=0;history.showModal();reload(false);});controls.append(view,filters,all);head.append(heading,controls);
   const rail=el('div',null,'latest-rail'),track=el('div',null,'latest-track');track.setAttribute('aria-label','Indexed title cards');track.tabIndex=0;
-  const left=button('\u2039',()=>scrollCards(-1)),right=button('\u203a',()=>scrollCards(1));
+  const left=button('',()=>scrollCards(-1)),right=button('',()=>scrollCards(1));
+  for(const [b,path] of [[left,'m15 6-6 6 6 6'],[right,'m9 6 6 6-6 6']]){const icon=document.createElementNS('http://www.w3.org/2000/svg','svg');icon.setAttribute('viewBox','0 0 24 24');icon.setAttribute('aria-hidden','true');const line=document.createElementNS(icon.namespaceURI,'path');line.setAttribute('d',path);icon.append(line);b.append(icon);}
   left.setAttribute('aria-label','Previous titles');right.setAttribute('aria-label','Next titles');left.classList.add('latest-arrow');right.classList.add('latest-arrow');
   rail.append(left,track,right);const status=el('p','Loading indexed titles\u2026','latest-status');status.setAttribute('role','status');
   panel.append(head,rail,status);document.querySelector('#panel-overview').append(panel);document.body.append(history,details);
   function motion(){return matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth';}
   function scrollCards(direction){const step=(track.firstElementChild?.getBoundingClientRect().width||track.clientWidth)+12;track.scrollBy({left:direction*Math.max(1,Math.floor((track.clientWidth+12)/step))*step,behavior:motion()});}
-  function arrows(){left.disabled=track.scrollLeft<2;right.disabled=track.scrollLeft+track.clientWidth>=track.scrollWidth-2;}
+  function arrows(){const art=track.querySelector('.latest-art');if(art){const r=art.getBoundingClientRect();rail.style.setProperty('--art-center',(r.top+r.height/2-rail.getBoundingClientRect().top)+'px');}left.disabled=track.scrollLeft<2;right.disabled=track.scrollLeft+track.clientWidth>=track.scrollWidth-2;}
   track.addEventListener('scroll',arrows,{passive:true});window.addEventListener('resize',arrows);
   function openDetails(item){
-    const m=item.metadata,close=button('Close details',()=>details.close());details.replaceChildren(close,el('h2',m?.title||item.imdb));
+    const m=item.metadata,close=button('Close details',()=>details.close());details.replaceChildren(close,el('h2',m?.title||'Title unavailable'));
     const dateLabel=item.estimated?'Earliest retained observation (original addition date unavailable): ':'First indexed: ';
     details.append(el('p',(item.type==='movie'?'Movie':'TV Show')+' \u00b7 '+item.imdb),el('p',dateLabel+new Date(item.firstSeen).toLocaleString()),el('p','Indexed in Lantern. Playback availability has not been verified.','muted'));
     if(m){details.append(el('p',m.description||'No description supplied.'),el('p',(item.type==='series'?'First aired: ':'Released: ')+(m.releaseDate||'Unavailable')+' \u00b7 IMDb rating: '+(m.imdbRating??'Unavailable')));}
-    details.append(el('p',m?'Metadata and artwork supplied by Cinemeta. Updated '+new Date(item.metadataAt).toLocaleString()+(item.metadataState==='stale'?' (stale).':'.'):'Metadata is unavailable; Lantern will retry automatically.','muted'));
+    details.append(el('p',m?'Metadata and artwork supplied by Cinemeta. Updated '+new Date(item.metadataAt).toLocaleString()+(item.metadataState==='stale'?' (stale).':'.'):metadataMessage(item)+'. Lantern retries automatically.','muted'));
+    if(item.metadataFetchState==='failed'||item.metadataState==='stale')details.append(el('p','Metadata refresh failed. Previous successful values, if available, are retained.','muted'));
+    if(item.metadataRetryAt)details.append(el('p','Next metadata refresh eligible: '+new Date(item.metadataRetryAt).toLocaleString(),'muted'));
     details.append(button('Open in Search',()=>{const [mediaType,id]=item.media.split('/');document.querySelector('#media-type').value=mediaType;document.querySelector('#media-id').value=id;document.querySelector('#media-id').dispatchEvent(new Event('input'));details.close();if(history.open)history.close();document.querySelector('#tab-search').click();document.querySelector('#panel-search').revealControl?.(document.querySelector('#search-form'));document.querySelector('#media-id').focus();}));
     details.showModal();close.focus();
   }
+  // Failed image URLs are retried on the existing poll, never on every render.
+  const imageFailures=new Map();
+  function metadataMessage(item){
+    if(item.metadataState==='stale')return 'Previous metadata retained; the latest refresh is unavailable.';
+    return ({pending:'Metadata loading\u2026',loading:'Metadata loading\u2026',failed:'Metadata request failed',unavailable:'Metadata unavailable',incomplete:'Artwork unavailable'})[item.metadataFetchState]||'Artwork unavailable';
+  }
   function card(item){
-    const m=item.metadata,b=button('',()=>openDetails(item));b.className='latest-media-card';b.dataset.key=item.key;b.setAttribute('aria-label',(m?.title||item.imdb)+' - view indexed title details');
-    const art=el('div',null,'latest-art');art.append(el('span','Poster unavailable','poster-fallback'));
-    if(m?.background||m?.poster){const image=el('img');image.src=m.background||m.poster;if(!m.background)image.className='portrait-art';image.alt='';image.loading='lazy';image.decoding='async';image.referrerPolicy='no-referrer';image.onload=()=>art.classList.add('poster-loaded');image.onerror=()=>image.remove();art.append(image);}
-    art.append(el('span',item.type==='movie'?'Movie':'TV Show','latest-type'));
+    const m=item.metadata,b=button('',()=>openDetails(item));b.className='latest-media-card';b.dataset.key=item.key;b.setAttribute('aria-label',(m?.title||'Title unavailable '+item.imdb)+' - view indexed title details');
+    if(item.metadataState==='stale'){b.title='Previous metadata \u2014 latest refresh unavailable';b.setAttribute('aria-label',b.getAttribute('aria-label')+'; previous metadata, refresh unavailable');}
+    const art=el('div',null,'latest-art'),fallback=el('span',m?'Artwork unavailable':metadataMessage(item),'poster-fallback');art.append(fallback);
+    const urls=[...new Set([m?.background,m?.poster].filter(Boolean))];let loading=false,loaded=false;
+    b.retryArtwork=()=>{
+      if(loading||loaded||!visible()||!b.isConnected)return;
+      const remaining=urls.filter(url=>(imageFailures.get(url)?.retryAt||0)<=Date.now());
+      function attempt(){
+        const url=remaining.shift();if(!url){loading=false;fallback.textContent=urls.length?'Artwork unavailable':m?'Artwork unavailable':metadataMessage(item);return;}
+        loading=true;fallback.textContent='Loading artwork\u2026';
+        const image=el('img');if(url===m.poster&&url!==m.background)image.className='portrait-art';image.alt='';image.decoding='async';image.referrerPolicy='no-referrer';
+        image.onload=()=>{loading=false;loaded=true;imageFailures.delete(url);art.classList.add('poster-loaded');};
+        image.onerror=()=>{image.remove();const attempts=Math.min(5,(imageFailures.get(url)?.attempts||0)+1);if(imageFailures.size>=256)imageFailures.delete(imageFailures.keys().next().value);imageFailures.set(url,{attempts,retryAt:Date.now()+Math.min(900000,60000*2**(attempts-1))});if(b.isConnected&&visible())attempt();else loading=false;};
+        image.src=url;art.append(image);
+      }
+      attempt();
+    };
     if(latestTitleIsNew(item))art.append(el('span','Newly indexed','latest-badge'));
     else if(view.value==='released')art.append(el('span','Recent release','latest-badge'));
-    const name=el('strong',m?.title||item.imdb);name.title=m?.title||item.imdb;
+    const name=el('strong',m?.title||'Title unavailable');name.title=m?.title||'Title unavailable \u00b7 '+item.imdb;
+    if(!m?.title)name.append(el('small',item.imdb,'latest-unresolved-id'));
     const meta=el('div',null,'latest-card-meta');
-    const year=el('span',m?.year||'—'),rating=el('span',m?.imdbRating?'\u2605 '+m.imdbRating+' IMDb':'—');
+    const year=el('span',m?.year||'\u2014'),rating=el('span',m?.imdbRating?'\u2605 '+m.imdbRating+' IMDb':'\u2014');
     year.title=m?.year||'Year unavailable';rating.title=m?.imdbRating?'IMDb rating':'Rating unavailable';
     year.setAttribute('aria-label',year.title);rating.setAttribute('aria-label',m?.imdbRating?rating.textContent:'Rating unavailable');meta.append(year,rating);
     b.append(art,name,meta);return b;
@@ -54,6 +77,7 @@ function latestTitleIsNew(item,now=Date.now()){const age=now-Number(item.firstSe
     lastData=data;const target=history.open?historyList:track;
     const signature=JSON.stringify([history.open,type,view.value,data.items]);
     if(signature!==previousSignature){const focused=target.contains(document.activeElement)?document.activeElement.dataset.key:null;const scroll=target.scrollLeft;target.replaceChildren(...data.items.map(card));target.scrollLeft=scroll;if(focused)[...target.children].find(n=>n.dataset.key===focused)?.focus({preventScroll:true});previousSignature=signature;}
+    for(const node of target.children)node.retryArtwork?.();
     for(const item of data.items)if(!latestTitleIsNew(item)){const node=[...target.children].find(n=>n.dataset.key===item.key),badge=node?.querySelector('.latest-badge');if(badge?.textContent==='Newly indexed')badge.remove();}
     const context=view.value==='released'?'Released in the last 90 days; TV dates refer to the series premiere. Only titles with known release dates appear.':'Sorted by first recorded date; older records use their earliest retained observation.';
     const message=data.items.length?`${data.total} indexed ${data.total===1?'title':'titles'}. ${context}`:(view.value==='released'?'No indexed titles with a known release date in the last 90 days.':'No indexed titles in this filter. Search or import a title to get started.');

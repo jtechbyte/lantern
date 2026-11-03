@@ -73,7 +73,7 @@ export function createApp({ store, engine, rd, adminToken, publicUrl, signingKey
   app.get('/api/latest-titles', async (req,res) => {
     const query=z.object({type:z.enum(['all','movie','series']).default('all'),view:z.enum(['added','released']).default('added'),offset:z.coerce.number().int().min(0).max(1000000).default(0),limit:z.coerce.number().int().min(1).max(48).default(12)}).strict().parse(req.query);
     const data=await latest.list(query);
-    void latest.warm();
+    void latest.warm(data.items.map(item=>item.key));
     res.json(data);
   });
   app.get('/api/activity', async (req,res) => res.json({events:await store.activityHistory()}));
