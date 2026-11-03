@@ -1,6 +1,6 @@
 # Installing Lantern
 
-For the prebuilt Docker Hub image, use [Docker Hub deployment](DOCKER.md) and `compose.image.yaml`. The commands below retain the source-build route using `compose.yaml`; do not mix Compose files accidentally on an existing instance.
+For the prebuilt Docker Hub image, use [Docker Hub deployment](DOCKER.md) and `docker-compose.yml`. The commands below use the published production image. The separate source-build file is documented below; do not mix Compose files accidentally on an existing instance.
 
 ## Requirements
 
@@ -43,18 +43,19 @@ Setup still writes `DATA_DIR` for compatibility; it does not select active Postg
 ## Start and check
 
 ```sh
-docker compose config --quiet
-docker compose up -d --build --wait --wait-timeout 120
-docker compose ps
+docker compose -f docker-compose.yml config --quiet
+docker compose -f docker-compose.yml pull
+docker compose -f docker-compose.yml up -d --wait --wait-timeout 120
+docker compose -f docker-compose.yml ps
 curl -fsS http://127.0.0.1:7001/healthz
-docker compose exec -T lantern node scripts/check-deployment.mjs http://127.0.0.1:7001
+docker compose -f docker-compose.yml exec -T lantern node scripts/check-deployment.mjs http://127.0.0.1:7001
 ```
 
 The database must be healthy before Lantern starts. `/healthz` checks the database and returns status/version; database unavailability returns 503. Change host-side curl to the chosen binding if necessary. The deployment checker checks HTTP routes and authentication boundaries, not playback.
 
 Open `http://localhost:7001` when the browser is on the server. For temporary access from another computer, `ssh -L 7001:127.0.0.1:7001 user@server` provides a browser tunnel; substitute your SSH account/host. This is not a public Stremio endpoint.
 
-Active data lives in the `postgres_data` named volume. Fresh databases receive numbered transactional migrations and defaults automatically. `lantern_data` is read-only legacy SQLite storage. Never use `docker compose down -v` for routine maintenance.
+Active data lives in the `postgres_data` named volume. Fresh databases receive numbered transactional migrations and defaults automatically. `lantern_data` is read-only legacy SQLite storage. Never use `docker compose -f docker-compose.yml down -v` for routine maintenance.
 
 ## Remote HTTPS
 
@@ -68,14 +69,16 @@ DOMAIN=lantern.example.com
 ```
 
 ```sh
-docker compose --profile https config --quiet
-docker compose --profile https up -d --build --wait --wait-timeout 120
-docker compose logs --tail=100 lantern caddy
+docker compose -f docker-compose.yml --profile https config --quiet
+docker compose -f docker-compose.yml --profile https up -d --wait --wait-timeout 120
+docker compose -f docker-compose.yml logs --tail=100 lantern caddy
 ```
 
 Caddy proxies to `lantern:7001`; `caddy_data` and `caddy_config` preserve its state. DNS, certificate issuance, and your firewall need live verification.
 
 ### Existing reverse proxy or Pangolin
+
+For intentional LAN access, set `LANTERN_BIND_ADDRESS` to the server's specific LAN IP and `PUBLIC_URL` to the exact reachable origin, then recreate Lantern. `0.0.0.0` exposes the port on all host interfaces; use it only deliberately with appropriate firewall rules. Plain HTTP is for trusted local evaluation; use HTTPS for remote devices. The default remains localhost-only. PostgreSQL has no published port in either case.
 
 Leave Caddy's profile off. A proxy on the host can target `http://127.0.0.1:7001`. Another container cannot reach Lantern through its own loopback: use a suitable shared Docker network or a published host address reachable by the proxy. For Newt/tunnel connectors choose the target based on the connector's location; DNS points at the tunnel ingress, not necessarily Lantern's machine.
 
@@ -90,7 +93,7 @@ Set `PUBLIC_URL` to the exact external HTTPS origin. Preserve paths and queries.
 5. Optionally **Monitor this title**, then check **Library → Monitored titles**. Searching does not automatically add it.
 6. Select **Install in Stremio**, or copy the private manifest URL from **Library → Installation** into Stremio's addon installer. Keep it private.
 7. Open the title in Stremio and try an authorized release. An account test or search does not guarantee playback.
-8. Refresh, then `docker compose restart lantern`. After health recovers, confirm saved settings and monitored titles remain. This checks your deployment's persistence.
+8. Refresh, then `docker compose -f docker-compose.yml restart lantern`. After health recovers, confirm saved settings and monitored titles remain. This checks your deployment's persistence.
 
 ## Legacy SQLite migration
 
@@ -100,13 +103,24 @@ With new files present and the old app stopped:
 
 ```sh
 sh scripts/setup.sh
-docker compose build lantern
-docker compose up -d --wait postgres
-docker compose run --rm lantern npm run migrate:sqlite
-docker compose up -d --wait --wait-timeout 120 lantern
+docker compose -f docker-compose.yml pull lantern
+docker compose -f docker-compose.yml up -d --wait postgres
+docker compose -f docker-compose.yml run --rm lantern npm run migrate:sqlite
+docker compose -f docker-compose.yml up -d --wait --wait-timeout 120 lantern
 ```
 
 The importer uses a temporary writable copy, validates encryption, and imports into an empty PostgreSQL target transactionally. It refuses a populated target; do not rerun after success. Normal startup detects legacy data beside an empty target and refuses to silently replace it. Verify counts, installation identity, and saved preferences before retiring the old deployment. Do not import unrelated test data.
+
+## Building from source
+
+For development or an explicitly selected source revision, use the complete `docker-compose.build.yml` instead of the production file:
+
+```sh
+docker compose -f docker-compose.build.yml config --quiet
+docker compose -f docker-compose.build.yml up -d --build --wait --wait-timeout 120
+```
+
+It uses the same services and volume keys but builds the local Dockerfile. It is not an override. Use its filename consistently on subsequent commands and retain the existing project identity. CI builds the Dockerfile then tests that image through `docker-compose.yml` with a temporary `LANTERN_IMAGE`.
 
 ## Direct Node deployment
 

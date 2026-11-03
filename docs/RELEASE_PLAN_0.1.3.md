@@ -47,14 +47,14 @@ Prefer `0.1.3` or the recorded digest in deployments. Stable aliases are mutable
 
 ## Future Ubuntu Compose update — do not run before publication
 
-These Bash commands assume the existing installation at `~/docker/lantern`, project name `lantern`, service/database role `postgres` / `lantern`, and `compose.image.yaml`. Confirm the project identity with `docker compose ls` first. If yours is `lantern-addon`, retain that instead. Include all existing private override files in the `dc` array on **every** command. Do not switch project names, volumes, database passwords, or encryption keys.
+These Bash commands assume the existing installation at `~/docker/lantern`, project name `lantern`, service/database role `postgres` / `lantern`, and `docker-compose.yml`. Confirm the project identity with `docker compose ls` first. If yours is `lantern-addon`, retain that instead. Include all existing private override files in the `dc` array on **every** command. Do not switch project names, volumes, database passwords, or encryption keys.
 
 After the published image passes verification, use a private backup and a short maintenance window. Stopping only Lantern prevents background writes after the rollback snapshot; PostgreSQL and unrelated services keep running.
 
 ```bash
 set -euo pipefail
 cd ~/docker/lantern
-dc=(docker compose -p lantern -f compose.image.yaml)
+dc=(docker compose -p lantern -f docker-compose.yml)
 "${dc[@]}" config --quiet
 backup="$HOME/lantern-backups/pre-0.1.3-$(date +%Y%m%d-%H%M%S)"
 mkdir -m 700 -p "$backup"
@@ -109,7 +109,7 @@ In the same project, set `backup` to the actual private backup directory, then:
 ```bash
 set -euo pipefail
 cd ~/docker/lantern
-dc=(docker compose -p lantern -f compose.image.yaml)
+dc=(docker compose -p lantern -f docker-compose.yml)
 backup="$HOME/lantern-backups/REPLACE_WITH_PRE_UPDATE_BACKUP"
 test -s "$backup/database.dump"
 test -s "$backup/application-image.tar.gz"

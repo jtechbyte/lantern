@@ -13,14 +13,14 @@ git clone https://github.com/jtechbyte/lantern.git
 cd lantern
 sh scripts/setup.sh
 # Edit .env: preserve generated secrets and set your real PUBLIC_URL for remote use.
-docker compose -f compose.image.yaml config --quiet
-docker compose -f compose.image.yaml pull
-docker compose -f compose.image.yaml up -d --wait --wait-timeout 120
+docker compose -f docker-compose.yml config --quiet
+docker compose -f docker-compose.yml pull
+docker compose -f docker-compose.yml up -d --wait --wait-timeout 120
 curl -fsS http://127.0.0.1:7001/healthz
-docker compose -f compose.image.yaml exec -T lantern node scripts/check-deployment.mjs http://127.0.0.1:7001
+docker compose -f docker-compose.yml exec -T lantern node scripts/check-deployment.mjs http://127.0.0.1:7001
 ```
 
-Use the same `-f compose.image.yaml` on future commands. This file is a complete deployment, not an override: it supplies Lantern, PostgreSQL 17, optional Caddy, persistent volumes, health dependencies, loopback binding, and non-root/read-only application isolation. It never builds locally. No Docker Hub sign-in is needed for a public image pull.
+Use the same `-f docker-compose.yml` on future commands. This file is a complete deployment, not an override: it supplies Lantern, PostgreSQL 17, optional Caddy, persistent volumes, health dependencies, loopback binding, and non-root/read-only application isolation. It never builds locally. No Docker Hub sign-in is needed for a public image pull.
 
 Read `.env` privately for the generated admin token, open `http://localhost:7001`, and unlock. Save your provider token in Playback, test the saved account, then install in Stremio. Configure your public HTTPS origin before using remote devices; localhost on a phone or TV is that device, not this server. See [Installation](INSTALLATION.md) for the complete walkthrough and source configuration.
 
@@ -31,10 +31,12 @@ Use the exact `PUBLIC_URL` origin in your browser. With setup's default, open `h
 For bundled HTTPS, set `PUBLIC_URL=https://your-real-hostname` and `DOMAIN=your-real-hostname`, configure DNS/ports, then:
 
 ```sh
-docker compose -f compose.image.yaml --profile https up -d --wait --wait-timeout 120
+docker compose -f docker-compose.yml --profile https up -d --wait --wait-timeout 120
 ```
 
 With an existing proxy, leave the profile off and follow [proxy networking guidance](INSTALLATION.md#existing-reverse-proxy-or-pangolin). PostgreSQL is not published on a host port.
+
+The Lantern image inherits its Dockerfile `HEALTHCHECK`: every 30 seconds it requests `/healthz`, with a 5-second timeout and 10-second startup grace. The endpoint checks PostgreSQL connectivity. Caddy waits for that image health check through `condition: service_healthy`; no duplicate Compose health check is needed. A custom `LANTERN_IMAGE` must retain this health check. PostgreSQL has its own `pg_isready` check.
 
 ## Versions, aliases, and digests
 
@@ -54,22 +56,38 @@ OCI labels include repository, revision, version, build time, and MIT license. B
 
 ## Existing installation: switch without replacing data
 
-Back up first using [Operations](OPERATIONS.md). Stay in your existing project directory. Preserve `.env`, `COMPOSE_PROJECT_NAME`, database credentials, and volumes. The pull-based file retains the same service and volume keys as `compose.yaml`, so the same project identity reuses them. A directory rename or changed project identity can select different volumes.
+### Preserve identity when changing filenames or directories
+
+The production file is now `docker-compose.yml`; the former production `compose.image.yaml` was renamed, and the source-build `compose.yaml` is now `docker-compose.build.yml`. Existing release archives, including v0.1.3, still contain their original filenames. These instructions apply to this revised checkout; do not expect an older tag to contain the renamed files.
+
+Before changing directories or files, run `docker compose ls` and record the existing project name. If uncertain, inspect an existing Lantern container (replace `CONTAINER_ID`):
+
+```sh
+docker inspect CONTAINER_ID --format '{{ index .Config.Labels "com.docker.compose.project" }}'
+```
+
+Keep that exact value in your private `.env` as `COMPOSE_PROJECT_NAME`, or pass `-p EXISTING_PROJECT` on **every** Compose command. For example, an installation originally named `lantern-addon` must retain that name even in a directory now called `lantern`. Do not copy the example name onto a differently named installation. Explicit `-p` takes precedence over `.env`; also check any shell `COMPOSE_PROJECT_NAME` or `COMPOSE_FILE` override.
+
+Renaming a file in the same directory does not by itself change the default identity. Moving the directory can. The file defines no project name, container names or explicit volume names: Compose continues to use the existing project prefix with `postgres_data`, `lantern_data`, `caddy_data`, and `caddy_config`.
+
+Preserve your private `.env`, overrides and Caddyfile. Compare any customized old Compose file before replacing it. Remove or archive superseded `compose.yaml` / `compose.yml` outside the deployment directory after preserving customizations: Compose prefers those filenames over `docker-compose.yml`. Use explicit `-f docker-compose.yml` to avoid ambiguity. Update scripts, service units and private override commands too. Do not use `down -v`, remove volumes, or regenerate credentials for this filename change. Recreate with the same identity using the commands below; no database migration is introduced by this rename.
+
+Back up first using [Operations](OPERATIONS.md). Stay in your existing project directory. Preserve `.env`, `COMPOSE_PROJECT_NAME`, database credentials, and volumes. The pull-based file retains the same service and volume keys as `docker-compose.build.yml`, so the same project identity reuses them. A directory rename or changed project identity can select different volumes.
 
 Inspect local Compose customizations (container names, ports, proxy networks, database names) and carry required differences into a private override; do not overwrite them blindly. Then select `LANTERN_IMAGE` in `.env` and use:
 
 ```sh
-docker compose -f compose.image.yaml config --quiet
-docker compose -f compose.image.yaml pull lantern
-docker compose -f compose.image.yaml up -d --no-build --wait --wait-timeout 120 lantern
-docker compose -f compose.image.yaml ps
+docker compose -f docker-compose.yml config --quiet
+docker compose -f docker-compose.yml pull lantern
+docker compose -f docker-compose.yml up -d --no-build --wait --wait-timeout 120 lantern
+docker compose -f docker-compose.yml ps
 ```
 
-Version 0.1.3 introduces migration 6 for indexed-title timestamps and metadata. Older images reject the newer schema. Restore a pre-update backup into a separate database before reverting to the old image; retain the original encryption key. Startup still applies existing numbered migrations. SQLite-to-PostgreSQL migration remains explicit and requires the old volume and original encryption key. Use `docker compose -f compose.image.yaml run --rm lantern npm run migrate:sqlite` only after following the legacy migration prerequisites in Installation.
+Version 0.1.3 introduces migration 6 for indexed-title timestamps and metadata. Older images reject the newer schema. Restore a pre-update backup into a separate database before reverting to the old image; retain the original encryption key. Startup still applies existing numbered migrations. SQLite-to-PostgreSQL migration remains explicit and requires the old volume and original encryption key. Use `docker compose -f docker-compose.yml run --rm lantern npm run migrate:sqlite` only after following the legacy migration prerequisites in Installation.
 
 ## Backup, restore, rollback, and updates
 
-Use [Operations](OPERATIONS.md) for complete copy-and-paste backup, restore, and rollback commands. They use `compose.image.yaml` directly. Keep the same project identity and include any private override files on every command.
+Use [Operations](OPERATIONS.md) for complete copy-and-paste backup, restore, and rollback commands. They use `docker-compose.yml` directly. Keep the same project identity and include any private override files on every command.
 
 Before an update, dump PostgreSQL, save `.env` and source/deployment configuration, and record the current image digest. Pull your chosen version and recreate only Lantern as above. Verify health, login, saved preferences, and installation identity after each update.
 
@@ -87,8 +105,8 @@ Workflow defaults are `contents: read`; only the release manifest and stable-pro
 
 ## What the container check proves
 
-`node scripts/container-smoke.mjs IMAGE` runs against Docker with an isolated random Compose project and disposable database volumes, using Playwright on the host. It checks non-root execution, runtime contents/labels, fresh native PostgreSQL initialization, health, protected endpoints, actual browser login and saving, refresh/restart/recreation persistence, database outage/recovery, and custom-format dump/restore into another database. It never uses real provider credentials or contacts source services.
+`node scripts/container-smoke.mjs IMAGE` runs against Docker with an isolated random Compose project and disposable database volumes, using Playwright on the host. It checks non-root execution, runtime contents/labels, fresh native PostgreSQL initialization, health, protected endpoints, actual browser login and saving, refresh/restart/recreation persistence, database outage/recovery, and custom-format dump/restore into another database. It also validates the optional HTTPS profile and checks a TLS request through Caddy using its local test CA. It never uses real provider credentials or contacts source services. Public-domain ACME issuance is a separate manual check.
 
-This test removes **only its own randomly named test project volumes** at the end. Run it on a disposable test host with port 7001 available, after `npm ci` and Chromium installation. Production volumes must never be supplied to it. For published validation, the workflow starts with an empty Docker credential directory and pulls the exact manifest digest before testing.
+This test removes **only its own randomly named test project volumes** at the end. Run it on a disposable test host with ports 7001, 80 and 443 available, after `npm ci` and Chromium installation. Production volumes must never be supplied to it. For published validation, the workflow starts with an empty Docker credential directory and pulls the exact manifest digest before testing.
 
 Passing these tests does not verify external DNS/TLS, physical mobile devices, every CPU variant, or actual Real-Debrid/Stremio video playback. Those remain separate acceptance checks.

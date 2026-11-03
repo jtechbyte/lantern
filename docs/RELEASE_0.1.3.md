@@ -40,6 +40,6 @@ Two pre-release candidates failed validation: an old literal Compose version ass
 
 ## Deployment
 
-The [production Compose file](../compose.image.yaml) pins `jctechmin/lantern:0.1.3`. To use GHCR, set `LANTERN_IMAGE=ghcr.io/jtechbyte/lantern:0.1.3` in the existing private `.env`. An immutable pin can use either repository plus `@sha256:14b40840d0cd79ef0e48ad2aafa9326040e72a81c8f4722a972fb5379b1a444c`.
+The [production Compose file](../docker-compose.yml) pins `jctechmin/lantern:0.1.3`. To use GHCR, set `LANTERN_IMAGE=ghcr.io/jtechbyte/lantern:0.1.3` in the existing private `.env`. An immutable pin can use either repository plus `@sha256:14b40840d0cd79ef0e48ad2aafa9326040e72a81c8f4722a972fb5379b1a444c`.
 
 Follow [README installation](../README.md#quick-start--docker-hub) and [Operations](OPERATIONS.md), preserving existing project identity, volumes, credentials, and overrides. The [release plan](RELEASE_PLAN_0.1.3.md) remains historical planning evidence. Publication did not update the user's running server. Native Stremio installation, real account verification, movie playback and episode playback remain **Not tested — unverified**.

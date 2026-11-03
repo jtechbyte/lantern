@@ -1,13 +1,13 @@
 # Maintenance and recovery
 
-These commands use the published-image deployment, `compose.image.yaml`. For a source-build installation, use `compose.yaml` instead and rebuild only when updating application code. Run commands from the deployed project directory and include any existing private override files. Keep `.env`, Compose identity, and named volumes. PostgreSQL owns active data; the legacy SQLite volume is not an up-to-date backup. Backups contain secrets: store them privately and keep an off-host copy.
+These commands use the published-image deployment, `docker-compose.yml`. For a source-build installation, use `docker-compose.build.yml` instead and rebuild only when updating application code. Run commands from the deployed project directory and include any existing private override files. Keep `.env`, Compose identity, and named volumes. PostgreSQL owns active data; the legacy SQLite volume is not an up-to-date backup. Backups contain secrets: store them privately and keep an off-host copy.
 
 ## Restart and inspect
 
 ```sh
-docker compose -f compose.image.yaml restart lantern
-docker compose -f compose.image.yaml ps
-docker compose -f compose.image.yaml logs --tail=100 lantern postgres
+docker compose -f docker-compose.yml restart lantern
+docker compose -f docker-compose.yml ps
+docker compose -f docker-compose.yml logs --tail=100 lantern postgres
 curl -fsS http://127.0.0.1:7001/healthz
 ```
 
@@ -27,10 +27,10 @@ mkdir -p "$backup"
 tar --exclude='./node_modules' --exclude='./.git' --exclude='./artifacts' \
     --exclude='./experiments' --exclude='./data' --exclude='./backups' \
     --exclude='*.zip' -czf "$backup/source-and-env.tar.gz" .
-docker compose -f compose.image.yaml exec -T postgres pg_dump -U lantern -d lantern -Fc > "$backup/database.dump"
+docker compose -f docker-compose.yml exec -T postgres pg_dump -U lantern -d lantern -Fc > "$backup/database.dump"
 test -s "$backup/database.dump"
-docker compose -f compose.image.yaml exec -T postgres pg_restore --list < "$backup/database.dump" > "$backup/database-contents.txt"
-container=$(docker compose -f compose.image.yaml ps -q lantern)
+docker compose -f docker-compose.yml exec -T postgres pg_restore --list < "$backup/database.dump" > "$backup/database-contents.txt"
+container=$(docker compose -f docker-compose.yml ps -q lantern)
 test -n "$container"
 image=$(docker inspect --format '{{.Image}}' "$container")
 docker image tag "$image" "lantern:rollback-$stamp"
@@ -51,12 +51,14 @@ Read release notes and create the backup above first. Set `LANTERN_IMAGE` in `.e
 git status --short
 git fetch --tags origin
 # Replace this with the actual published release tag you selected.
-git switch --detach v0.1.3
-docker compose -f compose.image.yaml config --quiet
-docker compose -f compose.image.yaml pull lantern
-docker compose -f compose.image.yaml up -d --no-build --wait --wait-timeout 120 lantern
+# Use the reviewed deployment files from this checkout; older v0.1.3
+# source archives use compose.image.yaml, not docker-compose.yml.
+# Set LANTERN_IMAGE in .env to the selected published image version.
+docker compose -f docker-compose.yml config --quiet
+docker compose -f docker-compose.yml pull lantern
+docker compose -f docker-compose.yml up -d --no-build --wait --wait-timeout 120 lantern
 curl -fsS http://127.0.0.1:7001/healthz
-docker compose -f compose.image.yaml exec -T lantern node scripts/check-deployment.mjs http://127.0.0.1:7001
+docker compose -f docker-compose.yml exec -T lantern node scripts/check-deployment.mjs http://127.0.0.1:7001
 ```
 
 Do not discard local edits to get a clean checkout. Preserve `.env`, custom Compose/Caddy settings, and any `COMPOSE_PROJECT_NAME`. For ZIP updates, verify the release's checksum when supplied, extract into a separate directory with `umask 022`, compare files, and transfer reviewed application files. Never replace `.env`, database data, or `node_modules` with someone else's files. Follow release-specific removal instructions; ZIP extraction does not remove retired files.
@@ -72,9 +74,9 @@ Use a trusted backup and the matching encryption key. Select its real absolute d
 set -euo pipefail
 backup="$HOME/lantern-backups/REPLACE_WITH_BACKUP_TIMESTAMP"
 test -s "$backup/database.dump"
-docker compose -f compose.image.yaml stop lantern
-docker compose -f compose.image.yaml exec -T postgres createdb -U lantern lantern_restore
-docker compose -f compose.image.yaml exec -T postgres pg_restore -U lantern -d lantern_restore \
+docker compose -f docker-compose.yml stop lantern
+docker compose -f docker-compose.yml exec -T postgres createdb -U lantern lantern_restore
+docker compose -f docker-compose.yml exec -T postgres pg_restore -U lantern -d lantern_restore \
     --no-owner --exit-on-error < "$backup/database.dump"
 )
 ```
@@ -91,7 +93,7 @@ services:
 ```
 
 ```sh
-docker compose -f compose.image.yaml -f compose.restore.yaml up -d --no-build --wait --wait-timeout 120 lantern
+docker compose -f docker-compose.yml -f compose.restore.yaml up -d --no-build --wait --wait-timeout 120 lantern
 curl -fsS http://127.0.0.1:7001/healthz
 ```
 
@@ -118,7 +120,7 @@ services:
 ```
 
 ```sh
-docker compose -f compose.image.yaml -f compose.rollback.yaml up -d --no-build --pull never --wait --wait-timeout 120 lantern
+docker compose -f docker-compose.yml -f compose.rollback.yaml up -d --no-build --pull never --wait --wait-timeout 120 lantern
 ```
 
 Retain the override on subsequent commands so you do not accidentally rebuild the failed version. Review matching old Compose/source files if service configuration changed. For rollback to SQLite, use the old image/configuration with the preserved legacy volume; PostgreSQL-only changes cannot appear in the old SQLite snapshot. Never use `down -v` as a rollback step.

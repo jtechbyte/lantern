@@ -15,7 +15,7 @@ const documentedSetup = process.argv.includes('--documented-setup');
 const base = documentedSetup ? 'http://localhost:7001' : 'http://127.0.0.1:7001';
 let admin = randomBytes(32).toString('hex');
 const version = JSON.parse(readFileSync('package.json', 'utf8')).version;
-const composeFile = documentedSetup ? 'compose.image.yaml' : 'compose.yaml';
+const composeFile = 'docker-compose.yml';
 const composeArgs = ['compose', '--project-name', project, '--project-directory', directory, '-f', join(directory, composeFile)];
 const docker = (...args) => execFileSync('docker', args, { encoding: 'utf8', timeout: 180000, maxBuffer: 4 * 1024 * 1024 });
 const compose = (...args) => docker(...composeArgs, ...args);
@@ -33,7 +33,7 @@ const healthy = async () => {
 };
 let browser;
 try {
-  copyFileSync('compose.image.yaml', join(directory, composeFile));
+  copyFileSync('docker-compose.yml', join(directory, composeFile));
   copyFileSync('Caddyfile', join(directory, 'Caddyfile'));
   if (documentedSetup) {
     assert.equal(image, `jctechmin/lantern:${version}`);
@@ -53,6 +53,16 @@ try {
     writeFileSync(join(directory, '.env'), `LANTERN_IMAGE=${image}\nADMIN_TOKEN=${admin}\nENCRYPTION_KEY=${randomBytes(32).toString('hex')}\nPOSTGRES_PASSWORD=${randomBytes(32).toString('hex')}\nPUBLIC_URL=${base}\nLANTERN_BIND_ADDRESS=127.0.0.1\n`, { mode: 0o600 });
   }
   compose('config', '--quiet');
+  compose('--profile', 'https', 'config', '--quiet');
+  const deployment = JSON.parse(compose('config', '--format', 'json'));
+  assert.equal(deployment.name, project);
+  assert.deepEqual(Object.keys(deployment.services).sort(), ['lantern', 'postgres']);
+  assert.equal(deployment.services.postgres.ports, undefined);
+  assert.equal(deployment.services.lantern.ports[0].host_ip, '127.0.0.1');
+  for (const key of ['lantern_data', 'postgres_data']) assert.equal(deployment.volumes[key].name, `${project}_${key}`);
+  const httpsDeployment = JSON.parse(compose('--profile', 'https', 'config', '--format', 'json'));
+  assert.equal(httpsDeployment.services.caddy.depends_on.lantern.condition, 'service_healthy');
+  console.log('PASS docker-compose.yml default/HTTPS config, internal PostgreSQL, localhost binding and unchanged project-volume naming');
   if (documentedSetup) compose('pull');
   const config = JSON.parse(docker('image', 'inspect', image))[0].Config;
   assert.equal(config.User, 'node');
@@ -165,6 +175,14 @@ try {
   compose('up', '-d', '--wait', '--wait-timeout', '120'); await healthy(); await checkSaved(); await checkMetadata();
   console.log('PASS metadata JSON, original success timestamps, retry attempts and deadlines survive application restart/recreation and PostgreSQL restart; endpoint retains fresh/failed/stale states');
   console.log('PASS container restart, recreation and PostgreSQL restart preserve saved settings and credentials');
+  // Simulate changing the deployment filename while retaining the explicit project.
+  const renamedPath = join(directory, 'identity-check.yml');
+  copyFileSync(join(directory, composeFile), renamedPath);
+  composeArgs[composeArgs.length - 1] = renamedPath;
+  compose('up', '-d', '--force-recreate', '--wait', '--wait-timeout', '120', 'lantern');
+  await healthy(); await checkSaved(); await checkMetadata();
+  composeArgs[composeArgs.length - 1] = join(directory, composeFile);
+  console.log('PASS Compose filename change with retained project identity reuses persisted settings and metadata');
   assert.match(compose('exec', '-T', 'lantern', 'node', 'scripts/check-deployment.mjs', 'http://127.0.0.1:7001'), /All deployment checks passed/);
   assert.match(compose('logs', '--no-color', 'lantern'), /Lantern listening on port 7001/);
   const lastSize = await api('database-size');
@@ -195,6 +213,24 @@ try {
   writeFileSync(composePath, readFileSync(composePath, 'utf8').replace('PGDATABASE: lantern', 'PGDATABASE: lantern_restore'));
   compose('up', '-d', '--force-recreate', '--wait', '--wait-timeout', '120', 'lantern'); await healthy(); await checkSaved();
   console.log('PASS native pg_dump/pg_restore into a separate database preserves encrypted settings and installation identity');
+  compose('--profile', 'https', 'up', '-d', '--wait', '--wait-timeout', '120');
+  assert.equal(JSON.parse(docker('inspect', compose('ps', '-q', 'lantern').trim()))[0].State.Health.Status, 'healthy');
+  compose('exec', '-T', 'caddy', 'caddy', 'validate', '--config', '/etc/caddy/Caddyfile', '--adapter', 'caddyfile');
+  // localhost uses Caddy's test-local CA, not public ACME/DNS. Do not disable TLS verification.
+  const ca = join(directory, 'caddy-test-root.crt');
+  for (let attempt = 0; ; attempt++) {
+    try {
+      writeFileSync(ca, compose('exec', '-T', 'caddy', 'cat', '/data/caddy/pki/authorities/local/root.crt'));
+      break;
+    } catch (error) {
+      if (attempt >= 15) throw error;
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+  const tlsHealth = JSON.parse(execFileSync('curl', ['--retry', '10', '--retry-all-errors', '--retry-delay', '1', '--max-time', '5', '--cacert', ca, '-fsS', 'https://localhost/healthz'], { encoding: 'utf8', timeout: 90000 }));
+  assert.equal(tlsHealth.status, 'ok');
+  assert.equal(tlsHealth.version, version);
+  console.log('PASS optional HTTPS profile: Caddy health dependency, configuration validation and trusted local-CA TLS reverse proxy; public DNS/ACME not tested');
   await page.reload(); await page.locator('#logout').waitFor({ state: 'visible' });
   await page.locator('#logout').click(); await page.locator('#admin-token').waitFor({ state: 'visible' });
   console.log(`PASS container smoke on ${process.arch}: ${image}`);
@@ -205,5 +241,5 @@ try {
 } finally {
   await browser?.close();
   // Explicit random project plus private directory: never deletes production volumes.
-  try { compose('down', '--volumes', '--remove-orphans'); } finally { rmSync(directory, { recursive: true, force: true }); }
+  try { compose('--profile', 'https', 'down', '--volumes', '--remove-orphans'); } finally { rmSync(directory, { recursive: true, force: true }); }
 }

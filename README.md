@@ -10,7 +10,7 @@ The dashboard explains what was found, why results were excluded, and whether a 
 
 ## Quick start — Docker Hub
 
-Published for **linux/amd64 and linux/arm64**, the project-maintained image is [`jctechmin/lantern`](https://hub.docker.com/r/jctechmin/lantern). The production Compose example pins `0.1.3`; see [image tags, publishing status, and deployment](docs/DOCKER.md). The GHCR mirror is `ghcr.io/jtechbyte/lantern:0.1.3` (see release verification for publication status). The original `compose.yaml` remains available for local source builds.
+Published for **linux/amd64 and linux/arm64**, the project-maintained image is [`jctechmin/lantern`](https://hub.docker.com/r/jctechmin/lantern). The production Compose example pins `0.1.3`; see [image tags, publishing status, and deployment](docs/DOCKER.md). The GHCR mirror is `ghcr.io/jtechbyte/lantern:0.1.3` (see release verification for publication status). The separate `docker-compose.build.yml` is available for local source builds.
 
 Requires Docker Engine with the Compose plugin, Git (or a source archive), and OpenSSL. For Ubuntu, follow [Docker's installation instructions](https://docs.docker.com/engine/install/ubuntu/). Node is included in the image.
 
@@ -20,12 +20,12 @@ cd lantern
 sh scripts/setup.sh
 # Setup creates .env with random admin, encryption and database credentials.
 # Edit .env privately: set PUBLIC_URL to your HTTPS origin for remote use.
-docker compose -f compose.image.yaml config --quiet
-docker compose -f compose.image.yaml pull
-docker compose -f compose.image.yaml up -d --wait --wait-timeout 120
+docker compose -f docker-compose.yml config --quiet
+docker compose -f docker-compose.yml pull
+docker compose -f docker-compose.yml up -d --wait --wait-timeout 120
 curl -fsS http://127.0.0.1:7001/healthz
-docker compose -f compose.image.yaml ps
-docker compose -f compose.image.yaml logs --tail=100 lantern postgres
+docker compose -f docker-compose.yml ps
+docker compose -f docker-compose.yml logs --tail=100 lantern postgres
 ```
 
 For local evaluation open **http://localhost:7001**. Unlock with `ADMIN_TOKEN` from your private `.env`. In **Playback**, enter your Real-Debrid token, **Save configuration**, then **Test account**. Choose discovery sources, save, and use **Install in Stremio**.
@@ -40,17 +40,17 @@ On a remote server, use `ssh -L 7001:127.0.0.1:7001 user@server` for temporary d
 
 ### Updates and recovery
 
-Before updating, [back up PostgreSQL, your .env, and the current image](docs/OPERATIONS.md#create-a-backup-before-updating). Preserve your original encryption key, Compose project identity, and local overrides. Select a published version using `LANTERN_IMAGE` in `.env`, then:
+Before updating, [back up PostgreSQL, your .env, and the current image](docs/OPERATIONS.md#create-a-backup-before-updating). Preserve your original encryption key, Compose project identity, and local overrides. Before changing filenames or directories, follow [the identity-preserving migration instructions](docs/DOCKER.md#preserve-identity-when-changing-filenames-or-directories). Select a published version using `LANTERN_IMAGE` in `.env`, then:
 
 ```sh
-docker compose -f compose.image.yaml pull lantern
-docker compose -f compose.image.yaml up -d --no-build --wait --wait-timeout 120 lantern
+docker compose -f docker-compose.yml pull lantern
+docker compose -f docker-compose.yml up -d --no-build --wait --wait-timeout 120 lantern
 curl -fsS http://127.0.0.1:7001/healthz
 ```
 
 Follow the [restore](docs/OPERATIONS.md#restore-without-overwriting-the-existing-database) and [rollback](docs/OPERATIONS.md#rollback) procedures to recover into a separate database. Version 0.1.3 adds indexed-title migration 6. Older applications reject this upgraded schema; rollback requires a matching pre-update dump restored into a separate database and the original encryption key. Never delete volumes to update or roll back.
 
-The published `latest` tag tracks stable releases and can change; it does not automatically update running containers. The recommended deployment uses `0.1.3`. For local source builds, follow [the separate source-build instructions](docs/INSTALLATION.md) using `compose.yaml` and `--build`. Do not mix the two Compose files or overwrite an existing deployment's customizations.
+The published `latest` tag tracks stable releases and can change; it does not automatically update running containers. The recommended deployment uses `0.1.3`. For local source builds, follow [the separate source-build instructions](docs/INSTALLATION.md) using `docker-compose.build.yml` and `--build`. Do not mix the two Compose files or overwrite an existing deployment's customizations.
 
 ![Lantern Overview with indexed-title carousel, PostgreSQL database size, setup status and source health](docs/images/overview-media-viewport-1536.png)
 

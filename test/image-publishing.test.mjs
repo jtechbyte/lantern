@@ -29,8 +29,16 @@ test('prereleases cannot update latest, major, minor, or plain stable version ta
   assert.throws(() => tags('0.1.1', 'release', { tag_name: 'v0.1.1', draft: true }));
 });
 test('pull-based Compose preserves services, database configuration and volume keys', () => {
-  const source = YAML.parse(readFileSync(new URL('../compose.yaml', import.meta.url), 'utf8'));
-  const image = YAML.parse(readFileSync(new URL('../compose.image.yaml', import.meta.url), 'utf8'));
+  const source = YAML.parse(readFileSync(new URL('../docker-compose.build.yml', import.meta.url), 'utf8'));
+  const image = YAML.parse(readFileSync(new URL('../docker-compose.yml', import.meta.url), 'utf8'));
+  assert.equal(image.name, undefined);
+  for (const service of Object.values(image.services)) assert.equal(service.container_name, undefined);
+  for (const volume of Object.values(image.volumes)) assert.equal(volume?.name, undefined);
+  assert.deepEqual(image.services.lantern.volumes, ['lantern_data:/app/data:ro']);
+  assert.equal(image.services.postgres.ports, undefined);
+  assert.deepEqual(image.services.caddy.profiles, ['https']);
+  assert.equal(image.services.caddy.depends_on.lantern.condition, 'service_healthy');
+  assert.match(readFileSync(new URL('../Dockerfile', import.meta.url), 'utf8'), /HEALTHCHECK .*\/healthz/);
   delete source.services.lantern.build;
   const version = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
   assert.equal(image.services.lantern.image, '${LANTERN_IMAGE:-jctechmin/lantern:' + version + '}');
