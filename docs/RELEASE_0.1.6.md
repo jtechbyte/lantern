@@ -24,4 +24,3 @@ Use the same -p project-name argument if your existing deployment requires it. N
 ## Limitations
 
 Native Stremio installation/handoff, real provider-account verification, movie playback and episode playback: **Not tested - unverified**. Public DNS/ACME and the user's firewall are unverified; isolated local-CA HTTPS is tested. Metadata/artwork depend on upstream availability. Image caching is browser-managed. No running user installation is updated by publishing.
-
