@@ -1,5 +1,7 @@
 # Final Overview verification
 
+Release follow-up: [0.1.3 publication and final-source verification](RELEASE_0.1.3.md) records the newer tagged commit, both registries, digests, and successful native published-image deployments. The earlier evidence and manual limitations below are retained. All four user manual checks remain **Not tested — unverified**.
+
 ## Production verification completed; report updated 2026-11-02
 
 Tested source: [`005ec2e58c1cb4dee9f87cadfc49fe42b4bacf15`](https://github.com/jtechbyte/lantern/commit/005ec2e58c1cb4dee9f87cadfc49fe42b4bacf15), on `verification/overview-final`. [Non-publishing GitHub Actions run](https://github.com/jtechbyte/lantern/actions/runs/41108595678) completed successfully on 2026-10-30 on both native `ubuntu-24.04` (AMD64) and `ubuntu-24.04-arm` (ARM64) runners. This supersedes the Docker and actual-zoom blockers recorded in the earlier checks below.

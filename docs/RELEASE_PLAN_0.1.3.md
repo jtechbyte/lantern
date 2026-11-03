@@ -1,5 +1,7 @@
 # Lantern 0.1.3 release plan — not published
 
+Historical plan: publication was subsequently authorized and completed. See [actual release results](RELEASE_0.1.3.md); the planning statements and pre-release digest below describe the state before publication, not the current registry state.
+
 Prepared 2026-11-02. This is a plan, not authorization to merge, tag, publish images, create a release, or update a running installation. The approved application layout and sidebar remain unchanged. Production Compose continues to default to the published `0.1.2` image until release preparation is authorized.
 
 ## Version and evidence

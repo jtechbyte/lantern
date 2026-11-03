@@ -83,7 +83,7 @@ For an image-only rollback with compatible schema, set `LANTERN_IMAGE` to the pr
 4. Merge reviewed source/version changes. Wait for both native build-test jobs. Publish a release tagged `v` plus the package version. Mark prereleases as prereleases. The workflow pushes tested native images, publishes version and commit tags, verifies anonymous pulling and deployment by digest on both architectures, and only then promotes stable major/minor/latest aliases.
 5. Review **verify-public**, not just **publish**, before announcing availability. Record the digest and run URL. If verification fails, report that the image was pushed but not successfully verified; do not call that a completed release.
 
-Workflow permissions are `contents: read`. Registry credentials are used only by trusted release jobs. `pull_request_target` is not used. Third-party Actions are pinned to full commits. Authentication is not forwarded as a build argument or copied into image layers. Runtime application credentials are supplied only when starting a deployment.
+Workflow defaults are `contents: read`; only the release manifest and stable-promotion jobs additionally receive `packages: write` for GHCR. Registry credentials are used only by trusted release jobs. `pull_request_target` is not used. Third-party Actions are pinned to full commits. Authentication is not forwarded as a build argument or copied into image layers. Runtime application credentials are supplied only when starting a deployment.
 
 ## What the container check proves
 

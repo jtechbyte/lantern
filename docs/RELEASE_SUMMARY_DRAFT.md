@@ -1,5 +1,7 @@
 # Draft release summary — not published
 
+Historical draft, retained for review context. See [0.1.3 release results](RELEASE_0.1.3.md) for the subsequently authorized publication, final commit, registry digests, and verification results.
+
 Lantern adds a Latest Movies & TV Shows carousel to the right-hand Overview workspace, preserving the approved sidebar. It shows unique indexed titles with cached Cinemeta artwork and metadata, type filters, date sorting, keyboard navigation, and accessible details and View all dialogs. It is not a trending feed or a playback-availability guarantee.
 
 Compact status panels retain all setup and source rows, with supporting information in Details dialogs. Failed source operations distinguish current unavailable results from previous successful measurements. Smaller and zoomed viewports retain an accessible scrolling fallback.
