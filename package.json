@@ -1,6 +1,6 @@
 {
   "name": "lantern-addon",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Self-hosted Stremio addon with direct public-source discovery",
   "directories": {
     "doc": "docs",

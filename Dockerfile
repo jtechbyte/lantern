@@ -4,7 +4,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
 FROM node:24-alpine AS runtime
-ARG VERSION=0.1.4
+ARG VERSION=0.1.5
 ARG REVISION=unknown
 ARG CREATED
 LABEL org.opencontainers.image.title="Lantern" \

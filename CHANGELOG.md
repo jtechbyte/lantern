@@ -2,6 +2,14 @@
 
 Only changes established by the local source and audit records are listed. There was no Git history or prior public release tag in the reviewed project; internal ZIP revisions are not presented as separate public releases.
 
+## 0.1.5 - 2026-11-03
+
+- Fit complete carousel cards between reserved arrow gutters without squeezing artwork or exposing partial cards.
+- Align forward/backward groups and keyboard focus, including the final card; recalculate after resize, filters, sorting and new data.
+- Contain amber hover, selected and focus highlights within rounded cards; remove outward glow and movement.
+- Preserve the approved dashboard and sidebar, existing APIs and data. No schema migration.
+- Stremio installation, live provider-account verification, movie and episode playback remain **Not tested - unverified**.
+
 ## 0.1.4 - 2026-11-03
 
 - Recover matching Cinemeta metadata through its validated redirect; persist bounded retry deadlines and retain stale successful metadata honestly.
