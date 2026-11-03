@@ -36,7 +36,7 @@ try {
   copyFileSync('compose.image.yaml', join(directory, composeFile));
   copyFileSync('Caddyfile', join(directory, 'Caddyfile'));
   if (documentedSetup) {
-    assert.equal(image, 'jctechmin/lantern:0.1.2');
+    assert.equal(image, `jctechmin/lantern:${version}`);
     mkdirSync(join(directory, 'scripts'));
     copyFileSync('scripts/setup.sh', join(directory, 'scripts/setup.sh'));
     execFileSync('sh', ['scripts/setup.sh'], { cwd: directory });

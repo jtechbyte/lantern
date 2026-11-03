@@ -2,11 +2,14 @@
 
 Only changes established by the local source and audit records are listed. There was no Git history or prior public release tag in the reviewed project; internal ZIP revisions are not presented as separate public releases.
 
-## Unreleased
+## 0.1.3 ? 2026-11-02
 
 - Add an Overview-only indexed-title carousel with cached Cinemeta metadata, type filters, date sorting, accessible details and View all.
 - Preserve the complete sidebar layout; fit Overview and bottom actions within target desktop viewports using compact status rows and accessible supporting-detail dialogs. Retain document scrolling for smaller or zoomed layouts.
-- Add transactional first-indexed timestamps with explicitly estimated backfill dates.
+- Add transactional first-indexed timestamps with explicitly estimated backfill dates (migration 6; rollback requires a pre-update database backup).
+- Keep failed source results separate from historical successful measurements.
+- Validate native AMD64/ARM64 production containers and actual browser zoom; publish through gated Docker Hub/GHCR workflows.
+- Stremio installation, live provider-account verification, movie playback, and episode playback: **Not tested ? unverified**.
 
 ## 0.1.2 - live database size
 

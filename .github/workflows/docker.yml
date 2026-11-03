@@ -91,14 +91,24 @@ jobs:
     if: github.event_name == 'release' && github.repository == 'jtechbyte/lantern'
     needs: [metadata, build-test]
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
     outputs:
       digest: ${{ steps.manifest.outputs.digest }}
+      ghcr_digest: ${{ steps.manifest.outputs.ghcr_digest }}
     steps:
       - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
       - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: GHCR login
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - id: manifest
         name: Publish version and commit manifests
         env:
@@ -115,6 +125,13 @@ jobs:
           echo "digest=$digest" >> "$GITHUB_OUTPUT"
           echo "Published jctechmin/lantern@$digest" >> "$GITHUB_STEP_SUMMARY"
           echo "$TAGS" >> "$GITHUB_STEP_SUMMARY"
+          ghcr_args=()
+          while IFS= read -r tag; do ghcr_args+=(--tag "ghcr.io/jtechbyte/lantern:$tag"); done < <(jq -r '.[] | select(test("^sha-|^[0-9]+\\.[0-9]+\\.[0-9]+"))' <<< "$TAGS")
+          docker buildx imagetools create "${ghcr_args[@]}" "jctechmin/lantern@$digest"
+          ghcr_digest=$(docker buildx imagetools inspect "ghcr.io/jtechbyte/lantern:sha-$REVISION" --format '{{json .Manifest}}' | jq -r '.digest')
+          [[ "$ghcr_digest" =~ ^sha256:[a-f0-9]{64}$ ]]
+          echo "ghcr_digest=$ghcr_digest" >> "$GITHUB_OUTPUT"
+          echo "Published ghcr.io/jtechbyte/lantern@$ghcr_digest" >> "$GITHUB_STEP_SUMMARY"
 
   verify-public:
     needs: [metadata, publish]
@@ -122,6 +139,7 @@ jobs:
       fail-fast: false
       matrix:
         runner: [ubuntu-24.04, ubuntu-24.04-arm]
+        registry: [dockerhub, ghcr]
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 20
     steps:
@@ -135,7 +153,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Pull anonymously and verify published deployment
         env:
-          IMAGE: jctechmin/lantern@${{ needs.publish.outputs.digest }}
+          IMAGE: ${{ matrix.registry == 'ghcr' && format('ghcr.io/jtechbyte/lantern@{0}', needs.publish.outputs.ghcr_digest) || format('jctechmin/lantern@{0}', needs.publish.outputs.digest) }}
         run: |
           export DOCKER_CONFIG=$(mktemp -d)
           docker pull "$IMAGE"
@@ -144,18 +162,31 @@ jobs:
   promote-stable:
     needs: [metadata, publish, verify-public]
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
       - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: GHCR login
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Promote verified stable aliases
         env:
           TAGS: ${{ needs.metadata.outputs.tags }}
           DIGEST: ${{ needs.publish.outputs.digest }}
+          GHCR_DIGEST: ${{ needs.publish.outputs.ghcr_digest }}
         run: |
           set -euo pipefail
           args=()
           while IFS= read -r tag; do args+=(--tag "jctechmin/lantern:$tag"); done < <(jq -r '.[] | select(. == "latest" or test("^[0-9]+(\\.[0-9]+)?$"))' <<< "$TAGS")
           if (( ${#args[@]} )); then docker buildx imagetools create "${args[@]}" "jctechmin/lantern@$DIGEST"; fi
+          ghcr_args=()
+          while IFS= read -r tag; do ghcr_args+=(--tag "ghcr.io/jtechbyte/lantern:$tag"); done < <(jq -r '.[] | select(. == "latest" or test("^[0-9]+(\\.[0-9]+)?$"))' <<< "$TAGS")
+          if (( ${#ghcr_args[@]} )); then docker buildx imagetools create "${ghcr_args[@]}" "ghcr.io/jtechbyte/lantern@$GHCR_DIGEST"; fi

@@ -31,4 +31,4 @@ jobs:
         working-directory: lantern
         run: |
           export DOCKER_CONFIG=$(mktemp -d)
-          node scripts/container-smoke.mjs jctechmin/lantern:0.1.2 --documented-setup
+          node scripts/container-smoke.mjs jctechmin/lantern:0.1.3 --documented-setup

@@ -45,13 +45,13 @@ The source archive includes `.env` and deployment configuration. Confirm the dum
 
 ## Update
 
-Read release notes and create the backup above first. Set `LANTERN_IMAGE` in `.env` to your selected stable image tag or digest; the current default is `jctechmin/lantern:0.1.2`. For a Git checkout, inspect local modifications before choosing a published tag:
+Read release notes and create the backup above first. Set `LANTERN_IMAGE` in `.env` to your selected stable image tag or digest; the current default is `jctechmin/lantern:0.1.3`. For a Git checkout, inspect local modifications before choosing a published tag:
 
 ```sh
 git status --short
 git fetch --tags origin
 # Replace this with the actual published release tag you selected.
-git switch --detach v0.1.2
+git switch --detach v0.1.3
 docker compose -f compose.image.yaml config --quiet
 docker compose -f compose.image.yaml pull lantern
 docker compose -f compose.image.yaml up -d --no-build --wait --wait-timeout 120 lantern
