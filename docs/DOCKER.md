@@ -2,7 +2,7 @@
 
 Lantern's project-maintained image is **[jctechmin/lantern](https://hub.docker.com/r/jctechmin/lantern)**. It is published by this project's GitHub Actions workflow; it is not part of Docker's separately curated Official Images library.
 
-The recommended image is `jctechmin/lantern:0.1.3`, adding the indexed-title carousel. The GHCR mirror is `ghcr.io/jtechbyte/lantern:0.1.3`; set `LANTERN_IMAGE` to select it. Check the [0.1.3 release verification](RELEASE_0.1.3.md) for actual publication status and digests. The original 0.1.1 release evidence remains in [Docker verification](DOCKER_VERIFICATION.md).
+The recommended image is `jctechmin/lantern:0.1.4`, adding the indexed-title carousel. The GHCR mirror is `ghcr.io/jtechbyte/lantern:0.1.4`; set `LANTERN_IMAGE` to select it. Check the [0.1.4 release verification](RELEASE_0.1.4.md) for actual publication status and digests. The original 0.1.1 release evidence remains in [Docker verification](DOCKER_VERIFICATION.md).
 
 ## Fresh installation
 
@@ -40,11 +40,11 @@ The Lantern image inherits its Dockerfile `HEALTHCHECK`: every 30 seconds it req
 
 ## Versions, aliases, and digests
 
-The Compose example defaults to the exact stable tag `0.1.3`. Override it in `.env` with `LANTERN_IMAGE`, for example `LANTERN_IMAGE=jctechmin/lantern:0.1.3`. For immutable deployment, use the manifest digest reported by the successful publishing workflow: `LANTERN_IMAGE=jctechmin/lantern@sha256:YOUR_VERIFIED_DIGEST`. The placeholder is not a usable digest.
+The Compose example defaults to the exact stable tag `0.1.4`. Override it in `.env` with `LANTERN_IMAGE`, for example `LANTERN_IMAGE=jctechmin/lantern:0.1.4`. For immutable deployment, use the manifest digest reported by the successful publishing workflow: `LANTERN_IMAGE=jctechmin/lantern@sha256:YOUR_VERIFIED_DIGEST`. The placeholder is not a usable digest.
 
 | Tag | Behavior |
 | --- | --- |
-| `0.1.3` | Stable version tag for this release. |
+| `0.1.4` | Stable version tag for this release. |
 | `0.1` | Moves with stable patch releases in this minor line. |
 | `0` | Moves with stable releases in the major-zero line; use a specific version for control. |
 | `latest` | Moves only when publishing a stable GitHub release, never a branch or prerelease. Pulling/recreating is still required; it does not auto-update running containers. |

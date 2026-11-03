@@ -2,6 +2,15 @@
 
 Only changes established by the local source and audit records are listed. There was no Git history or prior public release tag in the reviewed project; internal ZIP revisions are not presented as separate public releases.
 
+## 0.1.4 - 2026-11-03
+
+- Recover matching Cinemeta metadata through its validated redirect; persist bounded retry deadlines and retain stale successful metadata honestly.
+- Prefer landscape artwork; show portrait-only posters fully over a matching blurred background. Keep missing ratings unavailable.
+- Remove artwork content-type overlays and ensure keyboard-focused carousel cards become fully visible without changing the sidebar or approved layout.
+- Standardize production deployment on docker-compose.yml; retain docker-compose.build.yml for source builds and preserve project/volume identity.
+- Verify native AMD64/ARM64 builds, PostgreSQL persistence, filename changes, local-CA Caddy HTTPS and browser accessibility. No new schema migration.
+- Native Stremio installation, real provider-account verification, movie and episode playback remain **Not tested - unverified**.
+
 ## 0.1.3 ? 2026-11-02
 
 - Add an Overview-only indexed-title carousel with cached Cinemeta metadata, type filters, date sorting, accessible details and View all.
