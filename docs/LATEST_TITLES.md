@@ -6,6 +6,12 @@ an automatic discovery scheduler, or proof of playback availability. Unmatched
 DMM candidates without a movie/episode identity are not shown. Episodes are grouped
 under their series; duplicate sources do not create duplicate cards.
 
+## Carousel controls
+
+Use All, Movies or TV Shows to filter the indexed catalog, and Recently Added or Newly Released to select the date view. Arrows move between whole-card groups; the final group overlaps when needed to show the last card completely. Tab reaches cards, Arrow Left/Right moves between them, and Home/End reaches the first/last card. View all opens the paginated catalog. Selecting a card opens its metadata details; it does not start playback.
+
+In version 0.1.6, the heading uses an amber filmstrip and arrows are centered in the side gutters against the full card height. See [0.1.6 release verification](RELEASE_0.1.6.md) for publication status and image digests. See [frozen-design verification](CAROUSEL_GUTTER_ARROWS_REVIEW.md). Production instructions continue to pin the published image; source-build instructions use docker-compose.build.yml.
+
 ## Dates and metadata
 
 Migration 6 adds a catalog and a transactional release-write trigger. New identities

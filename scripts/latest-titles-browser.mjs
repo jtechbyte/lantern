@@ -89,7 +89,9 @@ try{
   assert.equal(await page.locator('#health .health-row').nth(2).locator(':scope > span').last().textContent(),'—');
   await page.keyboard.press('Escape');
   assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('aria-label')),'Source health details');
-  await page.getByRole('button',{name:'Next titles',exact:true}).focus();await page.keyboard.press('Enter');await page.clock.runFor(1000);assert.ok(await page.locator('.latest-track').evaluate(el=>el.scrollLeft>0),'Carousel next arrow scrolls');
+  await page.getByRole('button',{name:'Next titles',exact:true}).focus();await page.keyboard.press('Enter');await page.clock.runFor(1000);
+  // Native scrolling/rendering is not completed by advancing the mocked JavaScript clock.
+  await page.waitForFunction(()=>document.querySelector('.latest-track').scrollLeft>0,null,{timeout:3000});
   await page.getByRole('button',{name:'Previous titles',exact:true}).click();await page.clock.runFor(1000);
   await page.getByRole('button',{name:'TV Shows',exact:true}).click();await page.clock.runFor(300);await page.waitForFunction(()=>document.querySelectorAll('.latest-track .latest-media-card').length===8);
   assert.equal(await page.locator('.latest-type').count(),0);assert.ok((await page.locator('.latest-track .latest-media-card').evaluateAll(es=>es.map(e=>e.dataset.key))).every(k=>k.startsWith('series/')));

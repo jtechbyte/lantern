@@ -2,6 +2,13 @@
 
 Only changes established by the local source and audit records are listed. There was no Git history or prior public release tag in the reviewed project; internal ZIP revisions are not presented as separate public releases.
 
+## 0.1.6 - 2026-11-03
+
+- Use the existing outline-icon system for the amber carousel filmstrip heading.
+- Center arrows in measured side gutters against the full card height; preserve whole-card groups and the approved sidebar/layout.
+- Contain circular hover/focus highlights and keep disabled arrows muted. Remove one obsolete flex declaration.
+- No schema migration or backend behavior changes. Stremio installation, live provider-account verification, movie and episode playback remain **Not tested - unverified**.
+
 ## 0.1.5 - 2026-11-03
 
 - Fit complete carousel cards between reserved arrow gutters without squeezing artwork or exposing partial cards.

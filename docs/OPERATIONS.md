@@ -45,7 +45,7 @@ The source archive includes `.env` and deployment configuration. Confirm the dum
 
 ## Update
 
-Read release notes and create the backup above first. Set `LANTERN_IMAGE` in `.env` to your selected stable image tag or digest; the current default is `jctechmin/lantern:0.1.5`. For a Git checkout, inspect local modifications before choosing a published tag:
+Read release notes and create the backup above first. Set `LANTERN_IMAGE` in `.env` to your selected stable image tag or digest; the current default is `jctechmin/lantern:0.1.6`. For a Git checkout, inspect local modifications before choosing a published tag:
 
 ```sh
 git status --short

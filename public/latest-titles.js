@@ -4,7 +4,7 @@ function latestTitleIsNew(item,now=Date.now()){const age=now-Number(item.firstSe
   const el=(tag,text,className)=>{const n=document.createElement(tag);if(text)n.textContent=text;if(className)n.className=className;return n;};
   const button=(text,fn)=>{const n=el('button',text,'secondary');n.type='button';n.onclick=fn;return n;};
   const panel=el('section',null,'card latest-showcase');panel.id='latest-showcase';panel.setAttribute('aria-labelledby','latest-heading');
-  const head=el('div',null,'latest-heading'),heading=el('div'),title=el('h2','Latest Movies & TV Shows');title.id='latest-heading';title.prepend(dashboardIcon('document'));
+  const head=el('div',null,'latest-heading'),heading=el('div'),title=el('h2','Latest Movies & TV Shows');title.id='latest-heading';title.prepend(dashboardIcon('film'));
   heading.append(title,el('p','Recently indexed titles from your database.','muted'));
   const controls=el('div',null,'latest-controls'),view=el('select');view.setAttribute('aria-label','Latest titles view');
   for(const [value,label] of [['added','Recently Added'],['released','Newly Released']]){const o=el('option',label);o.value=value;view.append(o);}
@@ -51,7 +51,8 @@ function latestTitleIsNew(item,now=Date.now()){const age=now-Number(item.firstSe
     const next=direction>0?starts.find(i=>i>current):starts.reverse().find(i=>i<current);
     showGroup(next??current,motion());
   }
-  function arrows(){const art=track.querySelector('.latest-art');if(art){const r=art.getBoundingClientRect();rail.style.setProperty('--art-center',(r.top+r.height/2-rail.getBoundingClientRect().top)+'px');}left.disabled=track.scrollLeft<2;right.disabled=track.scrollLeft+track.clientWidth>=track.scrollWidth-2;}
+  function arrows(){if(track.firstElementChild&&rail.clientWidth){const bounds=rail.getBoundingClientRect(),t=track.getBoundingClientRect(),style=getComputedStyle(track);const start=t.left+parseFloat(style.paddingLeft),end=t.right-parseFloat(style.paddingRight);left.style.left=((start-bounds.left)/2/bounds.width*100)+'%';right.style.left=((end+bounds.right)/2-bounds.left)/bounds.width*100+'%';}left.disabled=track.scrollLeft<2;right.disabled=track.scrollLeft+track.clientWidth>=track.scrollWidth-2;}
+
   track.addEventListener('focusin',event=>{
     const card=event.target.closest('.latest-media-card');if(!card)return;
     const index=cards().indexOf(card);

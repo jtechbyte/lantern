@@ -4,6 +4,7 @@ const iconPaths={
  overview:'m3 10 9-7 9 7v11h-6v-7H9v7H3z', appearance:'M12 3a9 9 0 1 0 0 18h2a2 2 0 0 0 0-4h-1a2 2 0 0 1 0-4h3a5 5 0 0 0 0-10z M7 8h.01M11 6h.01M16 7h.01M6 12h.01',
  playback:'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0M10 8l6 4-6 4z', discovery:'M4 6c0-4 16-4 16 0s-16 4-16 0v12c0 4 16 4 16 0V6M4 12c0 4 16 4 16 0',
  search:'M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0m-2 5 6 6',library:'M3 5h6l2 3h10v13H3z',activity:'M3 13h4v8H3zM10 8h4v13h-4zM17 3h4v18h-4z',users:'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M2 21v-3a7 7 0 0 1 14 0v3zM17 4a4 4 0 0 1 0 8m2 3a6 6 0 0 1 3 6',
+ film:'M3 3h18v18H3zM7 3v18M17 3v18M3 7h4m-4 5h4m-4 5h4M17 7h4m-4 5h4m-4 5h4',
  document:'M5 2h9l5 5v15H5zM14 2v6h5M8 12h8M8 16h5',monitor:'M2 3h20v14H2zM12 17v5m-5 0h10', lock:'M5 10h14v12H5zM8 10V6a4 4 0 0 1 8 0v4M12 14v4', installation:'M12 3v3m0 12v3M3 12h3m12 0h3M6 6l2 2m8 8 2 2M6 18l2-2m8-8 2-2M17 12a5 5 0 1 1-10 0 5 5 0 0 1 10 0'};
 function dashboardIcon(name){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');svg.classList.add('outline-icon');const path=document.createElementNS(svg.namespaceURI,'path');path.setAttribute('d',iconPaths[name]||iconPaths.discovery);svg.append(path);return svg;}
 function saveState(state){const el=document.querySelector('#save-state');el.dataset.state=state;el.textContent={saved:'All changes saved',dirty:'Unsaved changes',saving:'Saving configuration…',failed:'Save failed · changes not saved'}[state];}
