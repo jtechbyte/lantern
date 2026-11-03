@@ -55,7 +55,7 @@ Scope: the native-zoom container starts with an empty catalog. This pass does no
 
 Local checks also rerun successfully: `node --test test/latest-titles.test.mjs test/source-health.test.mjs` (six passed), `node scripts/browser-smoke.mjs` (login, saving, imports, search, monitoring, mobile and logout; no unexpected JS/CSP errors), and `node scripts/overview-review.mjs` (all four target desktop viewports, eight status rows, no page scrolling, no JavaScript errors). No application changes followed these checks.
 
-### Remaining manual checks
+## Remaining manual checks — unverified
 
 Native Stremio handoff is **unverified**: no installed Stremio application/protocol handler was identified on the Windows verification machine. The generated private Stremio URI and HTTP manifest were verified automatically; this does not prove OS handoff.
 
@@ -64,7 +64,17 @@ Native Stremio handoff is **unverified**: no installed Stremio application/proto
 3. Confirm Stremio displays the configured addon name and completes installation.
 4. Confirm the addon appears in Stremio's installed addons. A successful installation does not guarantee a particular stream will play.
 
-Live provider-account verification, playback, and real source uptime were not tested in this isolated production run. No claims are made about those services. Manual human interaction with zoom was not performed; zoom shortcuts and reachability assertions were automated, followed by visual screenshot inspection.
+Live provider-account verification, playback, and real source uptime are **unverified** in this isolated production run. With an authorized test account, run **Test account**, then use Stremio to select a known playable movie and episode and confirm playback actually starts. Record the source, provider response, and any failure without including tokens or private URLs. Do not treat a successful account test as proof of playback.
+
+Manual human interaction with zoom was not performed; zoom shortcuts and reachability assertions were automated, followed by visual screenshot inspection. Every populated dialog/subtab at all three native zoom levels remains outside the completed coverage.
+
+## Documentation and release review — 2026-11-02
+
+The report has one top-level title. All 22 distinct screenshot links below were fetched anonymously from GitHub at evidence commit `b4780f089aa3f9111e790f750e1302a82314eb7b`: every response succeeded, had a PNG signature, and exactly matched the local file. These are repository evidence files, not expiring Actions artifact links.
+
+Reviewed the branch change list, application integration diff, validation workflow, and documentation changes. The current documentation finalization changes no application, layout, sidebar, dependency, deployment, or credential files. Added-line scanning found no private-key, GitHub-token, AWS-key, or JWT signatures. The credential-bearing URL match was an intentional `example.com` rejection-test fixture. This targeted review is not a guarantee that an exhaustive secret audit has been performed.
+
+The [draft release summary](RELEASE_SUMMARY_DRAFT.md) is ready for review. Native Stremio handoff, live provider-account verification, and playback remain unverified. No merge, tag, image publication, release creation, or production update is authorized by this report.
 
 ## Earlier application and frozen-layout checks (2026-10-30)
 
@@ -86,8 +96,8 @@ This pass changed verification scripts and refreshed screenshots, not the applic
 | Metadata | Live Cinemeta enrichment into isolated database; DOM checked against persisted records | Titles, years, IMDb ratings and artwork URLs matched; eight images loaded |
 | Edge cases | Long titles, missing metadata/artwork/rating, empty/loading, timeout and API failure/recovery | Passed |
 | Layout | Actual viewport screenshots at all four target sizes | No vertical page scrolling or action overlap; sidebar geometry and cropped PNGs identical to restored baseline |
-| Zoom fallback | Reduced CSS viewports, including mobile sizes | Controls accessible via scrolling; no horizontal page overflow. Actual browser zoom remains unverified: headless Edge closed when navigating to its settings page |
-| Production build | Docker availability checked | Blocked: Docker is not installed. There is no separate frontend compilation script |
+| Zoom fallback | Reduced CSS viewports, including mobile sizes | Passed. The initial actual-zoom attempt failed; native zoom was subsequently verified in CI as documented above |
+| Production build | Local Docker availability checked | Initially blocked locally; subsequent native AMD64/ARM64 production builds passed in CI as documented above. There is no separate frontend compilation script |
 | Cleanup | Reviewed feature CSS and references | No additional production code was demonstrably unused; nothing speculative removed. Temporary zoom probe removed |
 
 Source status fixtures and provider responses are controlled test data. Live Cinemeta access is the only external-service verification in these browser checks. No claim is made about a real provider account or production source uptime.
@@ -101,7 +111,7 @@ Visually inspected viewport captures:
 
 Additional commands run: `node scripts/latest-titles-browser.mjs --live`, `node scripts/browser-smoke.mjs`, `node scripts/overview-review.mjs`, `node scripts/database-size-browser.mjs`, and `git diff --check`.
 
-Remaining verification requires Docker for the production image build, an interactive browser for actual toolbar zoom, and an installed Stremio client plus an authorized provider account for native installation and live provider checks.
+The initial Docker and actual-zoom gaps were resolved by the production verification above. Native Stremio installation, live account verification, and playback still require the manual checks listed above.
 
 ## Frozen-layout follow-up
 
