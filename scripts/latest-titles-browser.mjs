@@ -1,3 +1,4 @@
+import {verifyWholeCardGroups} from './whole-card-groups-browser.mjs';
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import { existsSync,mkdirSync,writeFileSync } from 'node:fs';
@@ -63,6 +64,7 @@ try{
       }
       assert.ok(await page.locator('.playback-note').evaluate(e=>e.getBoundingClientRect().bottom<=innerHeight),'Footer explanation fits');
     }
+    if([[1280,720],[1366,768],[1536,864],[1920,1080]].some(([w,h])=>w===width&&h===height))await verifyWholeCardGroups(page,width,height);
     const cards=await page.locator('.latest-track').evaluate(track=>[...track.children].map(c=>({width:c.getBoundingClientRect().width,height:c.getBoundingClientRect().height})));
     assert.ok(cards.every(c=>Math.abs(c.width-(width>=1100&&height>=700?(height<=839?160:Math.max(190,Math.min(220,height*.14+69))):200))<1),'Stable responsive card width');assert.ok(Math.max(...cards.map(c=>c.height))-Math.min(...cards.map(c=>c.height))<=1,'Equal card heights');
     let firstCard=true;for(const card of await page.locator('.latest-track .latest-media-card').all()){if(firstCard){await card.focus();firstCard=false;}else await page.keyboard.press('Tab');assert.equal(await page.evaluate(()=>document.activeElement.dataset.key),await card.getAttribute('data-key'));await page.clock.runFor(600);await page.waitForTimeout(50);const bounds=await card.evaluate(e=>({card:e.getBoundingClientRect().toJSON(),track:e.parentElement.getBoundingClientRect().toJSON(),key:e.dataset.key}));assert.ok(bounds.card.left>=bounds.track.left&&bounds.card.right<=bounds.track.right+1,JSON.stringify({width,height,...bounds}));}

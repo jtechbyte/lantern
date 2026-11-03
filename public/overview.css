@@ -41,7 +41,6 @@
  #latest-showcase .latest-heading p{display:none}
  #latest-showcase .latest-controls{gap:6px;flex-wrap:nowrap}
  #latest-showcase .latest-controls button,#latest-showcase .latest-controls select{font-size:13px;min-height:30px;padding:4px 9px}
- #latest-showcase .latest-track{padding:4px 3px;gap:12px;scroll-padding:3px}
  #latest-showcase .latest-media-card{flex:0 0 var(--card-width);min-width:var(--card-width);padding-bottom:4px}
  #latest-showcase .latest-media-card>strong{font-size:13px;line-height:17px;min-height:38px;height:38px;padding:3px 8px 1px}
  #latest-showcase .latest-card-meta{padding:0 8px;line-height:18px}
