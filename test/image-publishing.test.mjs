@@ -32,7 +32,8 @@ test('pull-based Compose preserves services, database configuration and volume k
   const source = YAML.parse(readFileSync(new URL('../compose.yaml', import.meta.url), 'utf8'));
   const image = YAML.parse(readFileSync(new URL('../compose.image.yaml', import.meta.url), 'utf8'));
   delete source.services.lantern.build;
-  assert.equal(image.services.lantern.image, '${LANTERN_IMAGE:-jctechmin/lantern:0.1.2}');
+  const version = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
+  assert.equal(image.services.lantern.image, '${LANTERN_IMAGE:-jctechmin/lantern:' + version + '}');
   delete image.services.lantern.image;
   assert.deepEqual(image, source);
 });
@@ -46,6 +47,9 @@ test('workflow has read-only permissions, native tests, and no PR publishing pat
   assert.deepEqual(workflow.jobs['build-test'].strategy.matrix.include.map(x => x.arch), ['amd64', 'arm64']);
   assert.deepEqual(workflow.jobs.publish.needs, ['metadata', 'build-test']);
   assert.deepEqual(workflow.jobs['promote-stable'].needs, ['metadata','publish','verify-public']);
+  assert.deepEqual(workflow.jobs['verify-public'].strategy.matrix.registry, ['dockerhub','ghcr']);
+  for (const name of ['publish','promote-stable']) assert.deepEqual(workflow.jobs[name].permissions, {contents:'read',packages:'write'});
+  for (const name of ['metadata','build-test','verify-public']) assert.equal(workflow.jobs[name].permissions, undefined);
   assert.ok(workflow.jobs['verify-public'].steps.every(step => !step.uses?.startsWith('docker/login-action')));
   for (const job of Object.values(workflow.jobs)) for (const step of job.steps) if (step.uses) assert.match(step.uses, /@[a-f0-9]{40}$/);
 });
