@@ -48,7 +48,7 @@ try{
   assert.ok(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight));
   await page.screenshot({path:'artifacts/carousel-fix/fallback-'+width+'x'+height+'.png'});
  }
- const alignment=await page.locator('.latest-rail').evaluate(rail=>{const art=rail.querySelector('.latest-art').getBoundingClientRect(),buttons=[...rail.querySelectorAll('.latest-arrow')].map(e=>e.getBoundingClientRect());return buttons.map(b=>Math.abs(b.top+b.height/2-(art.top+art.height/2)));});assert.ok(alignment.every(d=>d<1),JSON.stringify(alignment));
+ const alignment=await page.locator('.latest-rail').evaluate(rail=>{const art=rail.querySelector('.latest-media-card').getBoundingClientRect(),buttons=[...rail.querySelectorAll('.latest-arrow')].map(e=>e.getBoundingClientRect());return buttons.map(b=>Math.abs(b.top+b.height/2-(art.top+art.height/2)));});assert.ok(alignment.every(d=>d<1),JSON.stringify(alignment));
  assert.deepEqual(errors,[]);
  console.log('PASS controlled browser: same-title image fallback, delayed load, failed/unavailable/pending states, bounded image retry/recovery, metadata resolution without reload, removed type overlays, centered arrows, no JavaScript exceptions. Expected HTTP503 image failures were injected.');
 }finally{await browser.close();await new Promise(r=>server.close(r));await store.close();}

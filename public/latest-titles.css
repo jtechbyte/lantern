@@ -9,10 +9,13 @@
 .latest-controls button{font-size:14px;padding:8px 12px;min-height:36px}
 .latest-filters button{border:0;background:transparent}
 .latest-filters [aria-pressed=true]{background:#ffbf3f;color:#111a20}
-.latest-rail{display:flex;align-items:center;gap:8px;min-width:0}
+.latest-rail{position:relative;display:flex;align-items:center;gap:8px;min-width:0}
 .latest-track{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;min-width:0;flex:0 1 auto;width:var(--track-width,100%);margin-inline:auto;padding:4px 3px;scroll-padding:3px;scrollbar-width:none;scroll-behavior:smooth}
 .latest-track::-webkit-scrollbar{display:none}
-.latest-arrow{border-radius:50%;width:34px;height:34px;flex:none;padding:0;display:grid;place-items:center;align-self:flex-start;margin-top:calc(var(--art-center,54px) - 17px)}
+.latest-arrow{border-radius:50%;width:34px;height:34px;flex:none;padding:0;display:grid;place-items:center;position:absolute;top:50%;transform:translate(-50%,-50%);box-shadow:none;filter:none}
+.latest-arrow:not(:disabled):is(:hover,:focus-visible){border-color:#ffbf3f;background:#172630;filter:none;box-shadow:none}
+.latest-arrow:focus-visible{outline:2px solid #ffbf3f;outline-offset:-4px}
+.latest-arrow:disabled{pointer-events:none;cursor:default}
 .latest-arrow svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .latest-media-card{position:relative;display:flex;flex-direction:column;flex:0 0 200px;min-width:200px;padding:0 0 8px;border:1px solid var(--line);border-radius:11px;background:#101d25;color:var(--text,#e7eef4);text-align:left;scroll-snap-align:start;transition:border-color .15s;box-shadow:none;filter:none;overflow-wrap:anywhere}
 .latest-media-card:is(:hover,:active,[aria-expanded=true]){border-color:#ffbf3f;box-shadow:none;filter:none;background:#172630}
@@ -35,7 +38,7 @@
 #latest-showcase .latest-card-meta{flex-wrap:nowrap}
 #latest-showcase .latest-badge{background:#ffbf3f;color:#151c20}
 #latest-showcase .latest-arrow:disabled{opacity:.35}
-@media(max-width:600px){#latest-showcase .latest-controls{width:100%}#latest-showcase .latest-rail{gap:4px}#latest-showcase .latest-arrow{width:28px}}
+@media(max-width:600px){#latest-showcase .latest-controls{width:100%}#latest-showcase .latest-rail{gap:4px}#latest-showcase .latest-arrow{width:28px;height:28px}}
 @media(prefers-reduced-motion:reduce){#latest-showcase .latest-track{scroll-behavior:auto}#latest-showcase .latest-media-card{transition:none}}
 
 .latest-art img.portrait-art{object-fit:contain}

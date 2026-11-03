@@ -8,14 +8,19 @@ export async function verifyWholeCardGroups(page,width,height){
  async function inspect(){
   const state=await track.evaluate(t=>{
    const bounds=t.getBoundingClientRect();const visible=[],partial=[];
+   const rail=t.parentElement.getBoundingClientRect(),style=getComputedStyle(t),card=t.firstElementChild.getBoundingClientRect();
+   const buttons=[...t.parentElement.querySelectorAll('.latest-arrow')];
+   const centers=[(rail.left+bounds.left+parseFloat(style.paddingLeft))/2,(bounds.right-parseFloat(style.paddingRight)+rail.right)/2];
+   const alignment=buttons.map((b,i)=>{const r=b.getBoundingClientRect(),svg=b.querySelector('svg').getBoundingClientRect();return {x:Math.abs(r.left+r.width/2-centers[i]),y:Math.abs(r.top+r.height/2-card.top-card.height/2),iconX:Math.abs(svg.left+svg.width/2-r.left-r.width/2),iconY:Math.abs(svg.top+svg.height/2-r.top-r.height/2),clear:i?r.left>=bounds.right:r.right<=bounds.left};});
    for(const [index,c] of [...t.children].entries()){
     const r=c.getBoundingClientRect();if(r.right>bounds.left+1&&r.left<bounds.right-1){
      if(r.left<bounds.left-1||r.right>bounds.right+1)partial.push(index);else visible.push(index);
      for(const e of c.querySelectorAll('strong,.latest-card-meta span,.latest-badge')){const a=e.getBoundingClientRect();if(a.left<bounds.left-1||a.right>bounds.right+1)partial.push(index);}
     }
    }
-   return {visible,partial,scroll:t.scrollLeft,total:t.children.length};
+   return {visible,partial,alignment,scroll:t.scrollLeft,total:t.children.length};
   });
+  assert.ok(state.alignment.every(a=>a.x<1&&a.y<1&&a.iconX<1&&a.iconY<1&&a.clear),JSON.stringify(state.alignment));
   assert.deepEqual(state.partial,[],JSON.stringify({width,height,...state}));assert.ok(state.visible.length);return state;
  }
  for(const [filter,count] of [['All',12],['TV Shows',8]]){
@@ -28,6 +33,13 @@ export async function verifyWholeCardGroups(page,width,height){
   const reverse=[];while(await previous.isEnabled()){await previous.click();await settle();reverse.push((await inspect()).visible[0]);}
   assert.deepEqual(reverse,starts.slice(0,-1).reverse(),'Backward arrows revisit the same aligned groups');
   assert.ok((await inspect()).visible.includes(0));
+  await next.hover();const before=await next.boundingBox();
+  assert.equal(await next.evaluate(e=>getComputedStyle(e).borderTopColor),'rgb(255, 191, 63)');
+  assert.equal(await next.evaluate(e=>getComputedStyle(e).boxShadow),'none');
+  await page.mouse.move(0,0);await next.focus();await page.keyboard.press('Tab');await page.keyboard.press('Shift+Tab');
+  assert.equal(await next.evaluate(e=>getComputedStyle(e).outlineOffset),'-4px');assert.deepEqual(await next.boundingBox(),before);
+  await page.screenshot({path:`${directory}/${label}-${width}x${height}-arrow-focus.png`});
+  assert.equal(await previous.evaluate(e=>getComputedStyle(e).pointerEvents),'none');
   for(let i=0;i<count;i++){
    await page.mouse.move(0,0);
    if(!i){await track.focus();await page.keyboard.press('Tab');}else await page.keyboard.press('ArrowRight');await settle();
