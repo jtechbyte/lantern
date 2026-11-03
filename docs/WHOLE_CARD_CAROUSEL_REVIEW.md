@@ -1,6 +1,6 @@
 # Whole-card carousel review
 
-Review only: no release, image publication or production deployment. Checkpoint: checkpoint/before-whole-card-groups. Application revision: 9f3f604268ec57046599a1129c867a402e0c96ff.
+Original pre-release review; publication was subsequently authorized and completed as [0.1.5](RELEASE_0.1.5.md). No production deployment was performed. Checkpoint: checkpoint/before-whole-card-groups. Application revision: 9f3f604268ec57046599a1129c867a402e0c96ff.
 
 ## Cause and correction
 
