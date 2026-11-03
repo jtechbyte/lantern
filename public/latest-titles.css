@@ -12,7 +12,7 @@
 .latest-rail{position:relative;display:flex;align-items:center;gap:8px;min-width:0}
 .latest-track{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;min-width:0;flex:0 1 auto;width:var(--track-width,100%);margin-inline:auto;padding:4px 3px;scroll-padding:3px;scrollbar-width:none;scroll-behavior:smooth}
 .latest-track::-webkit-scrollbar{display:none}
-.latest-arrow{border-radius:50%;width:34px;height:34px;flex:none;padding:0;display:grid;place-items:center;position:absolute;top:50%;transform:translate(-50%,-50%);box-shadow:none;filter:none}
+.latest-arrow{border-radius:50%;width:34px;height:34px;padding:0;display:grid;place-items:center;position:absolute;top:50%;transform:translate(-50%,-50%);box-shadow:none;filter:none}
 .latest-arrow:not(:disabled):is(:hover,:focus-visible){border-color:#ffbf3f;background:#172630;filter:none;box-shadow:none}
 .latest-arrow:focus-visible{outline:2px solid #ffbf3f;outline-offset:-4px}
 .latest-arrow:disabled{pointer-events:none;cursor:default}
