@@ -20,6 +20,7 @@ export async function verifyWholeCardGroups(page,width,height){
  }
  for(const [filter,count] of [['All',12],['TV Shows',8]]){
   await page.getByRole('button',{name:filter,exact:true}).click();await settle();await page.waitForFunction(n=>document.querySelectorAll('.latest-track .latest-media-card').length===n,count);await settle();
+  assert.equal((await inspect()).visible[0],0,'A changed filter starts at the first whole group');
   const label=filter==='All'?'all':'tv',seen=new Set(),starts=[];let group=0;
   for(;;){const state=await inspect();starts.push(state.visible[0]);state.visible.forEach(i=>seen.add(i));await page.screenshot({path:`${directory}/${label}-${width}x${height}-group-${group}.png`});if(await next.isDisabled())break;await next.click();await settle();assert.ok(++group<12);}
   assert.equal(seen.size,count,'Every item reached as a whole card');

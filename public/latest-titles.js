@@ -25,7 +25,7 @@ function latestTitleIsNew(item,now=Date.now()){const age=now-Number(item.firstSe
   rail.append(left,track,right);const status=el('p','Loading indexed titles\u2026','latest-status');status.setAttribute('role','status');
   panel.append(head,rail,status);document.querySelector('#panel-overview').append(panel);document.body.append(history,details);
   function motion(){return matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth';}
-  let perPage=1,pitch=0,groupStart=0;
+  let perPage=1,pitch=0,groupStart=0,resetTrack=false;
   const cards=()=>[...track.children];
   const lastStart=()=>Math.max(0,track.children.length-perPage);
   function showGroup(index,behavior='instant'){
@@ -47,7 +47,8 @@ function latestTitleIsNew(item,now=Date.now()){const age=now-Number(item.firstSe
   }
   function scrollCards(direction){
     const starts=[];for(let i=0;i<lastStart();i+=perPage)starts.push(i);starts.push(lastStart());
-    const next=direction>0?starts.find(i=>i>groupStart):starts.reverse().find(i=>i<groupStart);
+    const current=pitch?Math.round(track.scrollLeft/pitch):0;
+    const next=direction>0?starts.find(i=>i>current):starts.reverse().find(i=>i<current);
     showGroup(next??groupStart,motion());
   }
   function arrows(){const art=track.querySelector('.latest-art');if(art){const r=art.getBoundingClientRect();rail.style.setProperty('--art-center',(r.top+r.height/2-rail.getBoundingClientRect().top)+'px');}left.disabled=track.scrollLeft<2;right.disabled=track.scrollLeft+track.clientWidth>=track.scrollWidth-2;}
@@ -122,14 +123,15 @@ function latestTitleIsNew(item,now=Date.now()){const age=now-Number(item.firstSe
   function render(data){
     lastData=data;const target=history.open?historyList:track;
     const signature=JSON.stringify([history.open,type,view.value,data.items]);
-    if(signature!==previousSignature){const focused=target.contains(document.activeElement)?document.activeElement.dataset.key:null;const scroll=target.scrollLeft;target.replaceChildren(...data.items.map(card));target.scrollLeft=scroll;if(focused)[...target.children].find(n=>n.dataset.key===focused)?.focus({preventScroll:true});previousSignature=signature;}
+    if(signature!==previousSignature){const focused=target.contains(document.activeElement)?document.activeElement.dataset.key:null;const scroll=target===track&&resetTrack?0:target.scrollLeft;if(target===track&&resetTrack)groupStart=0;target.replaceChildren(...data.items.map(card));target.scrollLeft=scroll;if(focused)[...target.children].find(n=>n.dataset.key===focused)?.focus({preventScroll:true});previousSignature=signature;}
     for(const node of target.children)node.retryArtwork?.();
     for(const item of data.items)if(!latestTitleIsNew(item)){const node=[...target.children].find(n=>n.dataset.key===item.key),badge=node?.querySelector('.latest-badge');if(badge?.textContent==='Newly indexed')badge.remove();}
     const context=view.value==='released'?'Released in the last 90 days; TV dates refer to the series premiere. Only titles with known release dates appear.':'Sorted by first recorded date; older records use their earliest retained observation.';
     const message=data.items.length?`${data.total} indexed ${data.total===1?'title':'titles'}. ${context}`:(view.value==='released'?'No indexed titles with a known release date in the last 90 days.':'No indexed titles in this filter. Search or import a title to get started.');
     (history.open?historyStatus:status).textContent=message;
     pageInfo.textContent=data.total?`${offset+1}\u2013${offset+data.items.length} of ${data.total}`:'0 entries';back.disabled=offset===0;next.disabled=offset+12>=data.total;
-    requestAnimationFrame(alignCards);
+    // Align in the same render, before native scroll-snap can retain an old filter position.
+    if(target===track){alignCards();resetTrack=false;}
   }
   function visible(){return !disposed&&panel.isConnected&&!document.hidden&&!document.querySelector('#dashboard').hidden&&!document.querySelector('#panel-overview').hidden;}
   async function poll(){
@@ -140,7 +142,7 @@ function latestTitleIsNew(item,now=Date.now()){const age=now-Number(item.firstSe
     catch{if(visible()&&!request.signal.aborted)(history.open?historyStatus:status).textContent=lastData?'Refresh unavailable. Previously loaded titles may be stale.':'Indexed titles are unavailable. Retrying automatically.';else if(visible()&&!queued)(history.open?historyStatus:status).textContent=lastData?'Request timed out. Previously loaded titles may be stale.':'Request timed out. Retrying automatically.';}
     finally{panel.setAttribute('aria-busy','false');clearTimeout(timeout);controller=null;if(visible()){timer=setTimeout(poll,queued?0:30000);queued=false;}}
   }
-  function reload(reset=true){if(reset){offset=0;groupStart=0;}(history.open?historyStatus:status).textContent='Loading indexed titles\u2026';previousSignature='';clearTimeout(timer);if(controller){queued=true;controller.abort();}else poll();}
+  function reload(reset=true){if(reset){offset=0;groupStart=0;resetTrack=true;}(history.open?historyStatus:status).textContent='Loading indexed titles\u2026';previousSignature='';clearTimeout(timer);if(controller){queued=true;controller.abort();}else poll();}
   details.addEventListener('close',()=>document.querySelectorAll('.latest-media-card[aria-expanded=true]').forEach(n=>n.setAttribute('aria-expanded','false')));
   view.onchange=()=>reload();history.addEventListener('close',()=>reload());
   function sync(){const next=visible();if(next===active)return;active=next;clearTimeout(timer);if(active)reload(false);else{controller?.abort();if(details.open)details.close();if(history.open)history.close();}}
