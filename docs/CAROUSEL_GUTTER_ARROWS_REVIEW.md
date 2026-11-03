@@ -1,6 +1,6 @@
 # Carousel gutter arrows review
 
-Review only. No merge, release, image publication or production deployment. Checkpoint: checkpoint/before-gutter-arrows. Tested application revision: 3b9b79e0a84cedb6cb9d34bf6a75a74723e30999.
+Historical pre-release review. Publication was subsequently authorized and completed in [0.1.6](RELEASE_0.1.6.md). No production deployment was performed. Checkpoint: checkpoint/before-gutter-arrows. Tested application revision: 3b9b79e0a84cedb6cb9d34bf6a75a74723e30999.
 
 ## Focused correction
 
@@ -42,3 +42,5 @@ Updated LATEST_TITLES.md with actual keyboard/filter/history behavior and the di
 Post-cleanup node scripts/latest-titles-browser.mjs passed (all four desktop viewports plus responsive fallback, group navigation, filter/resize alignment, focus, dialogs and error recovery; no unexpected console errors). [Production verification 41651052296](https://github.com/jtechbyte/lantern/actions/runs/41651052296) passed on native AMD64 and ARM64 at the final application revision: 131 tests per architecture, browser suite, production build, default/HTTPS Compose validation, isolated PostgreSQL login/settings persistence/recreation, backup/restore, local-CA HTTPS and actual 125%/150%/200% browser zoom. Previously inspected screenshots remain representative: the removed flex declaration had no computed-layout effect.
 
 Native Stremio installation/handoff, live provider-account verification, movie playback and episode playback remain **Not tested - unverified**. Public DNS/ACME and the user's firewall are also unverified. Review branch only: no merge, tag, image publication, release or running-installation changes.
+
+Publication follow-up: the review-only statements above describe the earlier frozen-design checkpoint. Authorized release 0.1.6 and final checks are recorded in RELEASE_0.1.6.md; the manual limitations remain unchanged.
