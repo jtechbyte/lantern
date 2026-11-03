@@ -80,3 +80,17 @@ Commands: `npm ci`, `npm test`, `docker build --tag lantern:verification --build
 The smoke command uses temporary random credentials, an explicit random project and disposable volumes. It runs `docker compose -f docker-compose.yml config --quiet` (with that temporary project/directory), validates the HTTPS profile configuration, and selects the newly built image using `LANTERN_IMAGE=lantern:verification`. This is a production-image build test, not a new anonymous pull test of the previously published 0.1.3 tag. Caddy uses localhost and a test-local CA; the probe trusts that CA explicitly rather than disabling TLS verification. Public DNS, ACME issuance, real-domain routing and the user's firewall remain unverified.
 
 Only the review branch is pushed for non-publishing CI. No merge, tag, GitHub release, registry publication or update of the running installation occurs. The manual Stremio/provider/movie/episode limitations above remain unchanged.
+
+## Published verification - November 3, 2026
+
+Release source: [dab294a6488e20c2e7de4d6081459f4399924f5e](https://github.com/jtechbyte/lantern/commit/dab294a6488e20c2e7de4d6081459f4399924f5e). [GitHub release](https://github.com/jtechbyte/lantern/releases/tag/v0.1.4). [Publishing workflow 41623571014](https://github.com/jtechbyte/lantern/actions/runs/41623571014) succeeded.
+
+Both native linux/amd64 and linux/arm64 builds passed all 131 tests and isolated production-container checks. Four fresh verification jobs anonymously pulled the published digest from Docker Hub and GHCR on each architecture. All passed PostgreSQL initialization, authentication/login, save/refresh, settings and metadata persistence through restart/recreation, health failure/recovery, backup/restore and local-CA Caddy HTTPS. Stable alias promotion completed only afterward. Anonymous registry manifest checks confirmed all aliases resolve to the same digest.
+
+Repositories: [jctechmin/lantern](https://hub.docker.com/r/jctechmin/lantern) and ghcr.io/jtechbyte/lantern. Both publish tags `0.1.4`, `0.1`, `0`, `latest` and `sha-dab294a6488e20c2e7de4d6081459f4399924f5e`. Docker Hub also retains tested native tags `sha-dab294a6488e20c2e7de4d6081459f4399924f5e-amd64` and `sha-dab294a6488e20c2e7de4d6081459f4399924f5e-arm64`.
+
+Shared multi-architecture digest: `sha256:4118d384d58ccad44ea633f3d9d98a6c7045c0545b90c0ee2f88f26731a867de`. AMD64 manifest: `sha256:8d16fb0468f9ba93fe8842b06839f87e2b68c76127d014b83be401c2fbdb58f2`. ARM64 manifest: `sha256:9f6c787e43c609504e384daf4cac8150de2af0a597b7d8daabc10e9e05ea145e`.
+
+Pre-release verification [41622605568](https://github.com/jtechbyte/lantern/actions/runs/41622605568) additionally passed actual 125%, 150% and 200% browser zoom on both architectures. An earlier pre-release run caught stale 0.1.3 runtime version strings after the package bump; these were corrected before tagging. The merged release tree is identical to the corrected, tested revision. No production installation was changed. The previously documented manual Stremio, provider-account, movie/episode playback and public DNS/ACME checks remain **Not tested - unverified**.
+
+This publication was explicitly authorized after the earlier review-only checkpoint. Earlier publication-withheld statements describe that checkpoint, not the final release status.
