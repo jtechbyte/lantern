@@ -23,6 +23,8 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npx playwright install --with-deps chromium
+      - name: Whole-card carousel groups and keyboard highlights
+        run: node scripts/latest-titles-browser.mjs
       - run: sudo apt-get update && sudo apt-get install -y xvfb xdotool scrot
       - name: Build production Dockerfile locally on runner
         run: |
@@ -41,3 +43,4 @@ jobs:
           path: |
             artifacts/zoom/
             artifacts/database-size-*.png
+            artifacts/whole-card-groups/
