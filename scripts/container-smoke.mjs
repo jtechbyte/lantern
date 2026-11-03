@@ -156,6 +156,8 @@ try {
       const item=items.find(i=>i.key==='movie/tt000001'+index);assert.ok(item);assert.equal(item.metadataState,state);assert.equal(item.metadataRetryAt,retryAt);assert.equal(item.metadataAt,state==='failed'?null:cachedAt);
     }
   };
+  // A preceding browser poll may have cached the empty catalog for five seconds.
+  await new Promise(resolve=>setTimeout(resolve,5500));
   await checkMetadata();
   compose('restart', 'lantern'); await healthy(); await checkSaved(); await checkMetadata();
   compose('up', '-d', '--force-recreate', '--wait', '--wait-timeout', '120', 'lantern'); await healthy(); await checkSaved(); await checkMetadata();
