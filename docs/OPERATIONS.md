@@ -50,7 +50,6 @@ Read release notes and create the backup above first. Set `LANTERN_IMAGE` in `.e
 ```sh
 git status --short
 git fetch --tags origin
-# Replace this with the actual published release tag you selected.
 # Use the reviewed deployment files from this checkout; older v0.1.3
 # source archives use compose.image.yaml, not docker-compose.yml.
 # Set LANTERN_IMAGE in .env to the selected published image version.

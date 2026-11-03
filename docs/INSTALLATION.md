@@ -126,4 +126,4 @@ It uses the same services and volume keys but builds the local Dockerfile. It is
 
 Requires Node 24+ and a separately provisioned PostgreSQL database. Run `npm ci`, `npm run setup`, configure PG variables or `DATABASE_URL` in `.env`, then `npm run doctor` and `npm start`. Compose does not publish PostgreSQL to localhost; direct Node needs its own reachable connection. The repository does not supply a systemd unit.
 
-Read [Operations](OPERATIONS.md) before updating. Native Docker/PostgreSQL networking and public proxy setup were not verified in the Windows review environment.
+Read [Operations](OPERATIONS.md) before updating. See [final verification](FINAL_CAROUSEL_VERIFICATION.md) for native Docker/PostgreSQL CI results and the remaining public-proxy limitations; Docker is not available on the local Windows review host.

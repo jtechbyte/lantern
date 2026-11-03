@@ -50,3 +50,33 @@ Native Stremio installation/handoff, real provider-account verification, movie p
 ## Readiness
 
 The focused feature is ready for release review with the manual limitations above explicitly retained. Application/frontend code is frozen at the tested revision. Later documentation-only updates do not alter the tested files. Main, release tags, registry images and the running server remain unchanged. Only the review branch was pushed to run non-publishing CI.
+
+## Production Compose standardization - November 3, 2026
+
+The recoverable local checkpoint is `checkpoint/before-compose-standardization`. Production deployment is now `docker-compose.yml`; the source-build deployment is `docker-compose.build.yml`. Both complete files preserve the original parsed configuration exactly: only filenames, comments and blank-line formatting changed. The old default `compose.yaml` was renamed so plain Compose commands cannot silently select a local build instead of the production image.
+
+The service names, volume keys, legacy read-only mount, environment settings, loopback binding, optional HTTPS profile, security/resource limits and restart policies are unchanged. No top-level project name, explicit volume name or container name was introduced. Lantern retains its image-provided database-aware HEALTHCHECK. No application, frontend, sidebar, Dockerfile, dependency or schema changes were made for this task.
+
+README, environment reference, setup output, installation/source-build instructions, backup/restore/rollback commands, release-plan references and CI smoke tests use the new filenames. The migration guide explains retaining the actual project name through `COMPOSE_PROJECT_NAME` or `-p`, preserving private overrides, and handling older release archives that still contain the previous filenames. It does not advise deleting data or replacing credentials.
+
+Local checks: all 131 tests passed; both Compose files parsed identically to the checkpoint; 45 relative links in changed documentation resolved; `git diff --check` passed; application/frontend diff against the checkpoint was empty. The changed files were reviewed for unintended changes; no real credentials were added.
+
+Native validation source: [`ed059643df3ec7265f81166ced3d79eeba76b149`](https://github.com/jtechbyte/lantern/commit/ed059643df3ec7265f81166ced3d79eeba76b149). [Non-publishing workflow](https://github.com/jtechbyte/lantern/actions/runs/41619195825). Both native AMD64 and ARM64 jobs completed successfully. Each passed all 131 tests, built the production Dockerfile and passed the expanded isolated smoke test.
+
+| Check | Actual result on both architectures |
+| --- | --- |
+| Default and HTTPS Compose configuration | Passed; PostgreSQL has no host port, Lantern remains loopback-bound, project-prefixed volume names preserved. |
+| Image health check and startup | Passed; non-root image initialized PostgreSQL, became healthy and provided working login. |
+| Save and refresh | Passed; saved settings, redacted credentials and installation identity retained. |
+| Restart and recreation | Passed for Lantern restart/forced recreation and PostgreSQL restart; metadata and retry deadlines also retained. |
+| Compose filename change | Passed with the same explicit project name; persisted settings and metadata reused. |
+| Backup and restore | Native pg_dump/pg_restore into a separate disposable database passed. |
+| Optional Caddy HTTPS | Profile startup, Caddy config validation, dependency on healthy Lantern, and HTTPS /healthz with explicit local-CA trust passed. |
+| Database accuracy/recovery | Endpoint and direct SQL both returned 8,165,043 bytes at baseline on each architecture; growth, stale-state outage and recovery checks passed. |
+| Frontend and accessibility regression | Final shipped JS/CSS hashes matched source; browser login/save/logout, responsive metrics and actual 125%/150%/200% zoom checks passed. |
+
+Commands: `npm ci`, `npm test`, `docker build --tag lantern:verification --build-arg VERSION=0.1.3 --build-arg REVISION=$GITHUB_SHA --build-arg CREATED=<UTC timestamp> .`, then `VERIFY_BROWSER_ZOOM=1 xvfb-run -a -s "-screen 0 1600x1200x24" node scripts/container-smoke.mjs lantern:verification`. The exact runnable build command is in the linked workflow. Full logs are retained by that run; the local copy is `artifacts/compose-production-validation.log` (untracked). Subsequent documentation-only edits do not change the tested configuration or scripts.
+
+The smoke command uses temporary random credentials, an explicit random project and disposable volumes. It runs `docker compose -f docker-compose.yml config --quiet` (with that temporary project/directory), validates the HTTPS profile configuration, and selects the newly built image using `LANTERN_IMAGE=lantern:verification`. This is a production-image build test, not a new anonymous pull test of the previously published 0.1.3 tag. Caddy uses localhost and a test-local CA; the probe trusts that CA explicitly rather than disabling TLS verification. Public DNS, ACME issuance, real-domain routing and the user's firewall remain unverified.
+
+Only the review branch is pushed for non-publishing CI. No merge, tag, GitHub release, registry publication or update of the running installation occurs. The manual Stremio/provider/movie/episode limitations above remain unchanged.
