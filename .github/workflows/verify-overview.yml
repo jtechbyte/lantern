@@ -30,7 +30,7 @@ jobs:
             --build-arg VERSION="$(node -p 'require("./package.json").version')" \
             --build-arg REVISION="$GITHUB_SHA" \
             --build-arg CREATED="$(date -u +%Y-%m-%dT%H:%M:%SZ)" .
-      - name: Isolated PostgreSQL container smoke and actual browser zoom
+      - name: Production docker-compose.yml, HTTPS profile, PostgreSQL persistence and browser zoom
         env:
           VERIFY_BROWSER_ZOOM: '1'
         run: xvfb-run -a -s "-screen 0 1600x1200x24" node scripts/container-smoke.mjs lantern:verification

@@ -19,4 +19,5 @@ set -C
   printf 'POSTGRES_PASSWORD=%s\n' "$(openssl rand -hex 32)"
   printf 'PUBLIC_URL=http://localhost:7001\nPORT=7001\nDATA_DIR=./data\n'
 } > .env
-echo 'Created .env. Set PUBLIC_URL to your Pangolin HTTPS address before remote deployment.'
+echo 'Created .env. Set PUBLIC_URL to your HTTPS address before remote deployment.'
+echo 'Production: docker compose -f docker-compose.yml up -d --wait --wait-timeout 120'

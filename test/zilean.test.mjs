@@ -20,7 +20,7 @@ test('removed Zilean discovery never makes a network request', async () => {
 });
 
 test('Compose retains Lantern PostgreSQL without any Zilean services or mounts', () => {
-  const config = parse(readFileSync(new URL('../compose.yaml', import.meta.url), 'utf8'));
+  const config = parse(readFileSync(new URL('../docker-compose.build.yml', import.meta.url), 'utf8'));
   assert.deepEqual(Object.keys(config.services), ['lantern', 'postgres', 'caddy']);
   assert.equal(config.services.flaresolverr, undefined);
   assert.deepEqual(config.services.postgres.volumes, ['postgres_data:/var/lib/postgresql/data']);

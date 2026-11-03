@@ -66,3 +66,32 @@ test('newly indexed badge uses only precise first-indexed timestamps within seve
  assert.equal(check(0),true);assert.equal(check(7*86400000-1),true);assert.equal(check(7*86400000),false);assert.equal(check(7*86400000+1),false);assert.equal(check(-1),false);assert.equal(check(1,true),false);
  assert.equal(context.latestTitleIsNew({firstSeen:'bad'},now),false);
 });
+
+test('metadata retries use persistent bounded backoff, preserve stale values and recover',async t=>{
+ const store=await embeddedStore('a'.repeat(64));t.after(()=>store.close());
+ let now=Date.now(),calls=0,mode='fail';
+ await store.db.query("INSERT INTO releases VALUES('retry','movie/tt39773403','manual','{}',$1)",[now]);
+ const latest=new LatestTitles(store,{now:()=>now,request:async()=>{calls++;if(mode==='fail')throw Error('Transient provider failure');if(mode==='empty')return {};return {meta:{id:'tt39773403',type:'movie',name:'Exact identity',...(mode==='complete'?{poster:'https://example.org/own-poster.jpg'}:{})}};}});
+ const item=async()=>{latest.cache.clear();return (await latest.list()).items[0];};
+ assert.equal((await item()).metadataState,'pending');
+ await Promise.all([latest.warm(),latest.warm()]);assert.equal(calls,1);
+ assert.equal((await item()).metadataState,'failed');assert.equal((await item()).metadata,null);
+ assert.equal((await item()).metadataRetryAt,now+30000);
+ now+=30000;await latest.warm();assert.equal(calls,2);assert.equal((await item()).metadataRetryAt,now+60000);
+ now+=30000;await latest.warm();assert.equal(calls,2);
+ now+=30000;mode='complete';await latest.warm();assert.equal(calls,3);assert.equal((await item()).metadataState,'fresh');assert.equal((await item()).metadata._lookup,undefined);
+ const successfulAt=now;now+=8*86400000;mode='fail';await latest.warm();assert.equal((await item()).metadataState,'stale');assert.equal((await item()).metadataAt,successfulAt);assert.equal((await item()).metadata.title,'Exact identity');
+ now+=30000;mode='complete';await latest.warm();assert.equal((await item()).metadataState,'fresh');
+ now+=8*86400000;mode='incomplete';await latest.warm();assert.equal((await item()).metadataState,'incomplete');assert.equal((await item()).metadataRetryAt,now+900000);
+ now+=900000;mode='empty';await latest.warm();assert.equal((await item()).metadataFetchState,'unavailable');assert.equal((await item()).metadataState,'stale');assert.equal((await item()).metadataRetryAt,now+86400000);
+});
+
+test('legacy incomplete cache refreshes once and request concurrency is bounded',async t=>{
+ const store=await embeddedStore('a'.repeat(64));t.after(()=>store.close());let now=Date.now(),active=0,max=0,calls=0;
+ for(let i=0;i<6;i++)await store.db.query('INSERT INTO releases VALUES($1,$2,$3,$4,$5)',[String(i),'movie/tt100000'+i,'manual','{}',now+i]);
+ await store.db.query('UPDATE indexed_titles SET metadata=$1,next_metadata_at=$2',[JSON.stringify({title:'Legacy incomplete'}),now+7*86400000]);
+ const latest=new LatestTitles(store,{now:()=>now,request:async url=>{calls++;active++;max=Math.max(max,active);await new Promise(r=>setTimeout(r,5));active--;return {meta:{id:/tt\d+/.exec(url)[0],type:'movie',name:'Still without artwork'}};}});
+ await Promise.all([latest.warm(),latest.warm()]);assert.equal(calls,4);assert.equal(max,2);
+ now+=30000;await latest.warm();assert.equal(calls,6);
+ now+=30000;await latest.warm();assert.equal(calls,6);
+});

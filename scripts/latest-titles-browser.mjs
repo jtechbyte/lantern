@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { existsSync,mkdirSync } from 'node:fs';
+import {createServer} from 'node:http';
+import { existsSync,mkdirSync,writeFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 import { embeddedStore } from './lib/embedded-postgres.mjs';
 import { createApp } from '../src/server.mjs';
@@ -13,10 +14,11 @@ for(const [i,source] of ['dmm','yts','eztv','apibay'].entries())await store.heal
 const latest=new LatestTitles(store,{request:async()=>{throw Error('Offline fixture');}});
 let server,browser;
 try{
-  const app=createApp({store,latest,engine:new Engine(store),rd:new RealDebrid(store),adminToken:admin,publicUrl:'http://localhost',signingKey:'a'.repeat(64)});
-  server=await new Promise(resolve=>{const s=app.listen(0,'127.0.0.1',()=>resolve(s));});
+  server=createServer();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  const publicUrl='http://127.0.0.1:'+server.address().port;
+  const app=createApp({store,latest,engine:new Engine(store),rd:new RealDebrid(store),adminToken:admin,publicUrl,signingKey:'a'.repeat(64)});server.on('request',app);
   const edge='C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';browser=await chromium.launch({headless:true,...(existsSync(edge)?{executablePath:edge}:{})});
-  const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const page=await browser.newPage({reducedMotion:'reduce'});const httpFailures=[];page.on('response',r=>{if(r.status()>=400){const u=new URL(r.url());httpFailures.push({status:r.status(),url:u.origin+u.pathname});}});const consoleMessages=[];page.on('console',m=>{if(m.type()==='error')consoleMessages.push(m.text());});const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('http://127.0.0.1:'+server.address().port);await page.locator('#admin-token').fill(admin);await page.locator('#admin-token').press('Enter');
   await page.waitForFunction(()=>document.querySelector('.latest-status').textContent.includes('No indexed titles'));
   for(let i=0;i<16;i++){
@@ -63,16 +65,18 @@ try{
     }
     const cards=await page.locator('.latest-track').evaluate(track=>[...track.children].map(c=>({width:c.getBoundingClientRect().width,height:c.getBoundingClientRect().height})));
     assert.ok(cards.every(c=>Math.abs(c.width-(width>=1100&&height>=700?(height<=839?160:Math.max(190,Math.min(220,height*.14+69))):200))<1),'Stable responsive card width');assert.ok(Math.max(...cards.map(c=>c.height))-Math.min(...cards.map(c=>c.height))<=1,'Equal card heights');
+    let firstCard=true;for(const card of await page.locator('.latest-track .latest-media-card').all()){if(firstCard){await card.focus();firstCard=false;}else await page.keyboard.press('Tab');assert.equal(await page.evaluate(()=>document.activeElement.dataset.key),await card.getAttribute('data-key'));await page.clock.runFor(600);await page.waitForTimeout(50);const bounds=await card.evaluate(e=>({card:e.getBoundingClientRect().toJSON(),track:e.parentElement.getBoundingClientRect().toJSON(),key:e.dataset.key}));assert.ok(bounds.card.left>=bounds.track.left&&bounds.card.right<=bounds.track.right+1,JSON.stringify({width,height,...bounds}));}
+    await page.locator('.latest-track .latest-media-card').first().focus();await page.clock.runFor(100);await page.waitForTimeout(50);
     assert.ok(await page.locator('.latest-rail').evaluate(rail=>{const [left,track,right]=[...rail.children].map(e=>e.getBoundingClientRect());return left.right<=track.left&&right.left>=track.right;}),'Navigation arrows never overlay card content');
     for(let step=0;step<12&&await page.getByRole('button',{name:'Next titles',exact:true}).isEnabled();step++){
-      await page.getByRole('button',{name:'Next titles',exact:true}).focus();await page.keyboard.press('Enter');await page.clock.runFor(600);
+      await page.getByRole('button',{name:'Next titles',exact:true}).focus();await page.keyboard.press('Enter');await page.clock.runFor(600);await page.waitForTimeout(50);
     }
     assert.ok(await page.locator('.latest-track').evaluate(t=>{const a=t.getBoundingClientRect(),b=t.lastElementChild.getBoundingClientRect();return b.left>=a.left&&b.right<=a.right+1;}),'Final card is completely reachable through keyboard-operated arrows');
-    await page.locator('.latest-track .latest-media-card').first().focus();await page.clock.runFor(600);
-    await page.locator('.latest-track .latest-media-card').last().focus();await page.clock.runFor(600);
+    await page.locator('.latest-track .latest-media-card').first().focus();await page.clock.runFor(600);await page.waitForTimeout(50);
+    await page.locator('.latest-track .latest-media-card').last().focus();await page.clock.runFor(600);await page.waitForTimeout(50);
     assert.ok(await page.locator('.latest-track').evaluate(t=>{const a=t.getBoundingClientRect(),b=t.lastElementChild.getBoundingClientRect();return b.left>=a.left&&b.right<=a.right+1;}),'Keyboard card focus reveals final card');
-    assert.ok(await page.locator('.latest-track').evaluate(t=>{const a=t.getBoundingClientRect();return [...t.lastElementChild.querySelectorAll('strong,.latest-type,.latest-card-meta span')].every(e=>{const b=e.getBoundingClientRect();return b.left>=a.left&&b.right<=a.right+1;});}),'Final title, badge, year and rating are inside the visible rail');
-    await page.locator('.latest-track .latest-media-card').first().focus();await page.clock.runFor(600);await page.evaluate(()=>document.activeElement.blur());
+    assert.ok(await page.locator('.latest-track').evaluate(t=>{const a=t.getBoundingClientRect();return [...t.lastElementChild.querySelectorAll('strong,.latest-card-meta span')].every(e=>{const b=e.getBoundingClientRect();return b.left>=a.left&&b.right<=a.right+1;});}),'Final title, badge, year and rating are inside the visible rail');
+    await page.locator('.latest-track .latest-media-card').first().focus();await page.clock.runFor(600);await page.waitForTimeout(50);await page.evaluate(()=>document.activeElement.blur());
     await page.screenshot({path:`artifacts/latest-titles/${width}x${height}.png`,fullPage:true});
   }
   await page.setViewportSize({width:1366,height:768});await page.clock.runFor(300);
@@ -86,7 +90,7 @@ try{
   await page.getByRole('button',{name:'Next titles',exact:true}).focus();await page.keyboard.press('Enter');await page.clock.runFor(1000);assert.ok(await page.locator('.latest-track').evaluate(el=>el.scrollLeft>0),'Carousel next arrow scrolls');
   await page.getByRole('button',{name:'Previous titles',exact:true}).click();await page.clock.runFor(1000);
   await page.getByRole('button',{name:'TV Shows',exact:true}).click();await page.clock.runFor(300);await page.waitForFunction(()=>document.querySelectorAll('.latest-track .latest-media-card').length===8);
-  assert.ok((await page.locator('.latest-track .latest-type').allTextContents()).every(t=>t==='TV Show'));
+  assert.equal(await page.locator('.latest-type').count(),0);assert.ok((await page.locator('.latest-track .latest-media-card').evaluateAll(es=>es.map(e=>e.dataset.key))).every(k=>k.startsWith('series/')));
   await page.getByRole('button',{name:'All',exact:true}).click();await page.clock.runFor(300);await page.waitForFunction(()=>document.querySelectorAll('.latest-track .latest-media-card').length===12);
   await page.getByLabel('Latest titles view').selectOption('released');await page.clock.runFor(300);await page.waitForFunction(()=>document.querySelector('.latest-status').textContent.includes('15 indexed'));await page.getByLabel('Latest titles view').selectOption('added');await page.clock.runFor(300);
   await page.getByRole('button',{name:'Movies',exact:true}).click();await page.clock.runFor(300);await page.waitForFunction(()=>document.querySelectorAll('.latest-track .latest-media-card').length===8);
@@ -122,7 +126,7 @@ try{
   if(process.argv.includes('--live')){
     // Only this disposable database receives sample identities. Names/artwork are fetched live.
     await latest.pending;await store.db.query('DELETE FROM releases');
-    const identities=[['movie','tt0133093'],['series','tt0944947'],['movie','tt1375666'],['series','tt0903747'],['movie','tt0816692'],['series','tt4574334'],['movie','tt0111161'],['series','tt2861424']];
+    const identities=[['movie','tt10377864'],['series','tt0944947'],['movie','tt1375666'],['series','tt0903747'],['movie','tt0816692'],['series','tt4574334'],['movie','tt0111161'],['movie','tt39773403']];
     for(const [i,[type,id]] of identities.entries())await store.db.query('INSERT INTO releases VALUES($1,$2,$3,$4,$5)',['live'+i,type+'/'+id+(type==='series'?':1:1':''),'manual','{}',Date.now()+i]);
     latest.request=readJson;latest.nextWarm=0;await latest.warm();latest.nextWarm=0;await latest.warm();latest.cache.clear();
     await page.clock.fastForward(30001);await page.waitForFunction(()=>document.querySelectorAll('.latest-track img').length===8);
@@ -133,7 +137,7 @@ try{
       assert.ok(record);const metadata=record.metadata;
       assert.equal(await card.locator(':scope > strong').textContent(),metadata.title);
       assert.equal(await card.locator('.latest-card-meta span').first().textContent(),metadata.year);
-      assert.equal(await card.locator('img').getAttribute('src'),metadata.background||metadata.poster);
+      assert.ok([metadata.background,metadata.poster].includes(await card.locator('img').getAttribute('src')));
       assert.equal(await card.locator('.latest-card-meta span').last().textContent(),metadata.imdbRating?'★ '+metadata.imdbRating+' IMDb':'—');
     }
     await page.evaluate(()=>status());
@@ -147,18 +151,20 @@ try{
       await page.screenshot({path:`artifacts/latest-titles/viewport-${width}x${height}.png`});await page.screenshot({path:`artifacts/latest-titles/live-${width}x${height}.png`,fullPage:true});
       if([1280,1366,1536,1920].includes(width)){
         for(const keyboard of [false,true]){
+          const seen=new Set();const collect=async()=>{for(const key of await page.locator('.latest-track').evaluate(t=>{const r=t.getBoundingClientRect();return [...t.children].filter(e=>{const c=e.getBoundingClientRect();return c.left>=r.left&&c.right<=r.right+1;}).map(e=>e.dataset.key);}))seen.add(key);};await collect();
           for(let step=0;step<12&&await page.locator('.latest-track').evaluate(t=>t.scrollLeft+t.clientWidth<t.scrollWidth-2);step++){
             const arrow=page.getByRole('button',{name:'Next titles',exact:true});
             if(keyboard){await arrow.focus();await page.keyboard.press('Enter');}else await arrow.click();
-            await page.clock.runFor(600);
+            await page.clock.runFor(600);await page.waitForTimeout(50);await collect();
           }
-          assert.ok(await page.locator('.latest-track').evaluate(t=>{const a=t.getBoundingClientRect();return [t.lastElementChild,...t.lastElementChild.querySelectorAll('strong,.latest-type,.latest-badge,.latest-card-meta span')].every(e=>{const b=e.getBoundingClientRect();return b.left>=a.left&&b.right<=a.right+1;});}),'Final live card and all metadata fully visible');
+          assert.equal(seen.size,8,'Every live card fully visible through arrow navigation');
+          assert.ok(await page.locator('.latest-track').evaluate(t=>{const a=t.getBoundingClientRect();return [t.lastElementChild,...t.lastElementChild.querySelectorAll('strong,.latest-badge,.latest-card-meta span')].every(e=>{const b=e.getBoundingClientRect();return b.left>=a.left&&b.right<=a.right+1;});}),'Final live card and all metadata fully visible');
           await page.evaluate(()=>document.activeElement.blur());
           await page.screenshot({path:`artifacts/latest-titles/end-${keyboard?'keyboard':'arrows'}-${width}x${height}.png`});
           for(let step=0;step<12&&await page.locator('.latest-track').evaluate(t=>t.scrollLeft>1);step++){
             const arrow=page.getByRole('button',{name:'Previous titles',exact:true});
             if(keyboard){await arrow.focus();await page.keyboard.press('Enter');}else await arrow.click();
-            await page.clock.runFor(600);
+            await page.clock.runFor(600);await page.waitForTimeout(50);
           }
           assert.ok(await page.locator('.latest-track').evaluate(t=>t.scrollLeft<=1),'Complete return to start');
         }
@@ -168,4 +174,5 @@ try{
     }
     console.log('PASS live Cinemeta exact-ID metadata and eight browser-loaded posters in disposable PostgreSQL data');
   }
+writeFileSync('artifacts/latest-titles/console-errors.json',JSON.stringify({consoleMessages,httpFailures},null,2));assert.deepEqual(consoleMessages.filter(m=>!m.startsWith('Failed to load resource:')),[],'No unexpected console errors');assert.ok(httpFailures.every(f=>f.status===503&&f.url.endsWith('/api/latest-titles')||f.status===404&&f.url==='https://live.metahub.space/background/medium/tt39773403/img'),'Only injected API503 and known provider artwork404 responses');
 }finally{await browser?.close();await latest.pending;if(server)await new Promise(r=>server.close(r));await store.close();}

@@ -5,6 +5,7 @@ const contents = `ADMIN_TOKEN=${token}\nENCRYPTION_KEY=${randomBytes(32).toStrin
 try {
   writeFileSync('.env', contents, { flag: 'wx', mode: 0o600 });
   console.log('Created .env. Read ADMIN_TOKEN there to sign in. Set PUBLIC_URL to your HTTPS address before installing remotely.');
+  console.log('For Docker production: docker compose -f docker-compose.yml up -d --wait --wait-timeout 120');
 } catch (error) {
   if (error.code === 'EEXIST') {
     if (!/^POSTGRES_PASSWORD=/m.test(readFileSync('.env','utf8'))) {

@@ -22,10 +22,18 @@ the series premiere, not a new episode. Title details explain the date provenanc
 Cinemeta supplies metadata and artwork by exact type and IMDb identity. The existing
 search cache holds only name/year, so the panel has a separate persistent cache
 for artwork, descriptions and explicitly labeled IMDb ratings. Metadata is retained
-for seven days; failed lookups retry after 15 minutes. Each enrichment batch has at
+for seven days. Transient failures retry after 30 seconds, doubling to a 15-minute
+maximum; empty/404 responses retry after one day. Metadata without artwork retries
+after 15 minutes, doubling to six hours. Previous successful metadata is retained
+and marked stale after a failed refresh. Each enrichment batch has at
 most four titles, two concurrent requests, five-second timeouts and a 2 MiB response
 limit. Batches run at most once per 30 seconds while the endpoint is requested.
-Missing artwork, years and ratings are labeled rather than invented.
+The exact Cinemeta live-endpoint redirect is supported without allowing arbitrary
+redirects. A failed background image falls back to the same record's poster;
+failed image URLs retry on polling with a one-minute to 15-minute backoff.
+Missing artwork, years and ratings are labeled rather than invented. Unresolved
+titles show "Title unavailable" with their IMDb ID. Image content-type overlays
+are omitted; All / Movies / TV Shows filters retain the underlying media type.
 
 The administrator-only `/api/latest-titles` endpoint accepts `type` (all/movie/series),
 `view` (added/released), `offset`, and `limit` (1–48). Lists have a bounded five-second
