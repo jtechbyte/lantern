@@ -1,6 +1,6 @@
 # Portrait artwork review
 
-Local refinement of the carousel metadata fix, November 2, 2026 (response evidence timestamp is UTC November 3). Not pushed, merged, tagged, released, or deployed.
+Historical local review of the carousel metadata refinement, November 2, 2026 (response evidence timestamp is UTC November 3). Subsequent cleanup and production verification are recorded in [Final carousel verification](FINAL_CAROUSEL_VERIFICATION.md). No release or deployment has occurred.
 
 ## Change
 
@@ -32,7 +32,7 @@ Both primary metadata URLs returned HTTP 307 to their exact `cinemeta-live.strem
 - `node --test test/latest-titles.test.mjs test/metadata-redirect.test.mjs`: 8 passed, zero failed.
 - `node scripts/carousel-metadata-browser.mjs`: controlled background failure, delayed poster load, same-URL blur, foreground containment, retry/recovery, metadata states, removed type overlays and artwork-centered arrows passed. No JavaScript exceptions. Controlled HTTP503 errors are expected.
 - `node scripts/portrait-artwork-review.mjs`: real provider responses and rendered images for both IDs passed. All four target desktops have equal card/artwork heights, no vertical scrolling, unchanged sidebar geometry and no content-type overlays. All captures visually inspected; no stretching or foreground crop. The source poster for The Canvas is dark, so its derived background is deliberately subtle.
-- No new production build was run for this frontend-only refinement. Prior production verification is documented in [the preceding report](CAROUSEL_METADATA_FIX.md); it does not certify this uncommitted refinement. No deployment or publication occurred.
+- At the time of this initial review, no new production build had run for the refinement. Prior production verification is documented in [the preceding report](CAROUSEL_METADATA_FIX.md); it did not certify this refinement; the subsequent final verification report does. No deployment or publication occurred.
 
 ## Actual viewport captures
 
