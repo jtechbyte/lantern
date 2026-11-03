@@ -57,6 +57,15 @@ Local checks also rerun successfully: `node --test test/latest-titles.test.mjs t
 
 ## Remaining manual checks — unverified
 
+User-reported status, recorded 2026-11-02: the user explicitly confirmed that these manual tests have **not been performed**. This is a report of test status, not a successful manual verification.
+
+| Manual check | User-reported result | Platform / error |
+| --- | --- | --- |
+| Native Stremio handoff and installation | Not tested — unverified | Not supplied |
+| Live Real-Debrid account verification | Not tested — unverified | Not supplied |
+| Movie playback | Not tested — unverified | Not supplied |
+| TV episode playback | Not tested — unverified | Not supplied |
+
 Native Stremio handoff is **unverified**: no installed Stremio application/protocol handler was identified on the Windows verification machine. The generated private Stremio URI and HTTP manifest were verified automatically; this does not prove OS handoff.
 
 1. On a machine with Stremio installed, open Lantern and unlock the dashboard.
@@ -75,6 +84,8 @@ The report has one top-level title. All 22 distinct screenshot links below were 
 Reviewed the branch change list, application integration diff, validation workflow, and documentation changes. The current documentation finalization changes no application, layout, sidebar, dependency, deployment, or credential files. Added-line scanning found no private-key, GitHub-token, AWS-key, or JWT signatures. The credential-bearing URL match was an intentional `example.com` rejection-test fixture. This targeted review is not a guarantee that an exhaustive secret audit has been performed.
 
 The [draft release summary](RELEASE_SUMMARY_DRAFT.md) is ready for review. Native Stremio handoff, live provider-account verification, and playback remain unverified. No merge, tag, image publication, release creation, or production update is authorized by this report.
+
+See the [unpublished 0.1.3 release plan](RELEASE_PLAN_0.1.3.md) for version availability, workflow gates, image tags, update commands, and schema-aware rollback. Those operational steps have not been executed.
 
 ## Earlier application and frozen-layout checks (2026-10-30)
 
